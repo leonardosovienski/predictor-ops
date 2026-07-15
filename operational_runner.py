@@ -32,6 +32,11 @@ except ModuleNotFoundError:
         safe_redact_text,
     )
 
+try:
+    from tools.tools_provenance import ToolsProvenanceError, collect_tools_provenance
+except ModuleNotFoundError:
+    from tools_provenance import ToolsProvenanceError, collect_tools_provenance  # type: ignore[no-redef]
+
 sys.dont_write_bytecode = True
 
 def utc_now() -> str:
@@ -76,10 +81,22 @@ def _core_summary(project_path: Path) -> dict[str, str]:
     return {"status": "NOT_APPLICABLE", "scope": "no vendor VERSION found"}
 
 
+def _consumer_provenance(raw: str | None, sensitive_values: Sequence[str]) -> dict[str, Any] | None:
+    if raw is None:
+        return None
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"consumer provenance must be a JSON object: {exc.msg}") from exc
+    if not isinstance(value, dict):
+        raise ValueError("consumer provenance must be a JSON object")
+    return safe_redact_mapping(value, sensitive_values)
+
+
 def _base_record(args: argparse.Namespace, run_id: str, started_at: str, sensitive_values: Sequence[str]) -> dict[str, Any]:
     project_path = Path(args.cwd).resolve()
     command = redact_command(args.command, sensitive_values)
-    return {
+    record = {
         "run_id": run_id,
         "task_name": args.task,
         "project": args.project,
@@ -98,6 +115,11 @@ def _base_record(args: argparse.Namespace, run_id: str, started_at: str, sensiti
         "log_path": str(Path(args.log).resolve()),
         "heartbeat_path": str(Path(args.heartbeat).resolve()),
     }
+    record["tools_provenance"] = collect_tools_provenance(strict=args.provenance_mode == "strict")
+    consumer = _consumer_provenance(args.consumer_provenance_json, sensitive_values)
+    if consumer is not None:
+        record["consumer_provenance"] = consumer
+    return record
 
 
 def _finish(record: dict[str, Any], status: str, exit_code: int, started: float, error: str | None = None, sensitive_values: Sequence[str] = ()) -> dict[str, Any]:
@@ -194,6 +216,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--timeout", type=float)
     parser.add_argument("--lock")
     parser.add_argument("--partial-exit-code", type=int)
+    parser.add_argument("--provenance-mode", choices=("strict", "permissive"), default="strict")
+    parser.add_argument("--consumer-provenance-json", help="optional redacted JSON object supplied by the consumer")
     return parser
 
 
@@ -212,7 +236,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args.command = values[boundary + 1:]
     try:
         return run(args)
-    except (ValueError, OSError) as exc:
+    except (ValueError, OSError, ToolsProvenanceError) as exc:
         print(f"operational_runner configuration error: {redact(str(exc))}", file=sys.stderr)
         return 3
 

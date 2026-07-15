@@ -74,7 +74,7 @@ def test_wrapper_redacts_stdout_stderr_command_heartbeat_and_jsonl(tmp_path: Pat
     monkeypatch.setenv("FICTITIOUS_API_KEY", FAKE_KEY)
     log, heartbeat, events = tmp_path / "human.log", tmp_path / "heartbeat.json", tmp_path / "events.jsonl"
     child = f"import sys; print('api_key={FAKE_KEY}'); print('Bearer {FAKE_TOKEN}', file=sys.stderr); raise SystemExit(9)"
-    code = runner.main(["run", "--task", "test", "--project", "test", "--cwd", str(tmp_path), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--", sys.executable, "-c", child, "--token", FAKE_TOKEN])
+    code = runner.main(["run", "--task", "test", "--project", "test", "--cwd", str(tmp_path), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--provenance-mode", "permissive", "--", sys.executable, "-c", child, "--token", FAKE_TOKEN])
     assert code == 9
     produced = [log, heartbeat, events]
     for artifact in produced:
@@ -88,7 +88,7 @@ def test_wrapper_persists_no_raw_output_when_redactor_fails(tmp_path: Path, monk
     monkeypatch.setattr(runner, "safe_redact_text", lambda *_: redaction.REDACTION_FAILED)
     log, heartbeat, events = tmp_path / "human.log", tmp_path / "heartbeat.json", tmp_path / "events.jsonl"
     child = f"print('token={FAKE_TOKEN}')"
-    code = runner.main(["run", "--task", "test", "--project", "test", "--cwd", str(tmp_path), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--", sys.executable, "-c", child])
+    code = runner.main(["run", "--task", "test", "--project", "test", "--cwd", str(tmp_path), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--provenance-mode", "permissive", "--", sys.executable, "-c", child])
     assert code == 0
     assert FAKE_TOKEN not in log.read_text(encoding="utf-8")
     assert redaction.REDACTION_FAILED in log.read_text(encoding="utf-8")

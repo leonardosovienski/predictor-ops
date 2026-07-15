@@ -12,7 +12,7 @@ def invoke(tmp_path: Path, command: list[str], **extra: object) -> tuple[int, Pa
     log = tmp_path / "human.log"
     heartbeat = tmp_path / "heartbeat.json"
     events = tmp_path / "events.jsonl"
-    args = ["run", "--task", "test-task", "--project", "test", "--cwd", str(tmp_path), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events)]
+    args = ["run", "--task", "test-task", "--project", "test", "--cwd", str(tmp_path), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--provenance-mode", "permissive"]
     for key, value in extra.items():
         args.extend(["--" + key.replace("_", "-"), str(value)])
     args.extend(["--", *command])
@@ -30,6 +30,8 @@ def test_success_records_observable_envelope(tmp_path: Path) -> None:
     assert record["started_at_utc"] and record["finished_at_utc"]
     assert "ok" in log.read_text(encoding="utf-8")
     assert json.loads(events.read_text(encoding="utf-8"))["exit_code"] == 0
+    assert record["tools_provenance"]["version"] == "1.1.0"
+    assert json.loads(events.read_text(encoding="utf-8"))["tools_provenance"] == record["tools_provenance"]
 
 
 def test_child_failure_is_propagated(tmp_path: Path) -> None:
@@ -73,7 +75,7 @@ def test_child_partial_exit_is_preserved_and_observable(tmp_path: Path) -> None:
 
 def test_invalid_working_directory_is_observable(tmp_path: Path) -> None:
     log, heartbeat, events = tmp_path / "x.log", tmp_path / "x.json", tmp_path / "x.jsonl"
-    code = runner.main(["run", "--task", "bad", "--project", "test", "--cwd", str(tmp_path / "absent"), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--", sys.executable, "-c", "pass"])
+    code = runner.main(["run", "--task", "bad", "--project", "test", "--cwd", str(tmp_path / "absent"), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--provenance-mode", "permissive", "--", sys.executable, "-c", "pass"])
     assert code == 3 and read_heartbeat(heartbeat)["status"] == "FAILED"
 
 
@@ -104,6 +106,17 @@ def test_human_log_has_boundary_even_when_child_is_silent(tmp_path: Path) -> Non
 
 def test_runner_creates_missing_lock_parent(tmp_path: Path) -> None:
     base = tmp_path / "operations"
-    code = runner.main(["run", "--task", "nested", "--project", "test", "--cwd", str(tmp_path), "--log", str(base / "human.log"), "--heartbeat", str(base / "heartbeat.json"), "--event-log", str(base / "events.jsonl"), "--", sys.executable, "-c", "pass"])
+    code = runner.main(["run", "--task", "nested", "--project", "test", "--cwd", str(tmp_path), "--log", str(base / "human.log"), "--heartbeat", str(base / "heartbeat.json"), "--event-log", str(base / "events.jsonl"), "--provenance-mode", "permissive", "--", sys.executable, "-c", "pass"])
     assert code == 0
     assert (base / "heartbeat.json").is_file() and not (base / "heartbeat.json.lock").exists()
+
+
+def test_consumer_metadata_is_additive_and_redacted(tmp_path: Path) -> None:
+    metadata = json.dumps({"project": "example", "project_commit": "abc", "token": "do-not-persist"})
+    code, _, heartbeat, _ = invoke(
+        tmp_path, [sys.executable, "-c", "pass"], consumer_provenance_json=metadata,
+    )
+    record = read_heartbeat(heartbeat)
+    assert code == 0
+    assert record["consumer_provenance"]["project_commit"] == "abc"
+    assert record["consumer_provenance"]["token"] == "[REDACTED]"

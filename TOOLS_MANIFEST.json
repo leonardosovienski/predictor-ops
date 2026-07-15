@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "tools_version": "1.1.0",
+  "content_hash": "b893c12e59a897c0f706591546d78447c03076860c165f3f74ba3355ce3e13d9",
+  "hash_algorithm": "sha256-path-nul-content-nul-v1",
+  "included_files": [
+    ".gitignore",
+    "CHANGELOG.md",
+    "PROVENANCE.md",
+    "README.md",
+    "core_provenance.py",
+    "ecosystem_health.py",
+    "operational_runner.py",
+    "secret_redaction.py",
+    "tests/conftest.py",
+    "tests/test_brasileirao_operational_entrypoint.py",
+    "tests/test_core_provenance.py",
+    "tests/test_cs_operational_entrypoint.py",
+    "tests/test_ecosystem_health.py",
+    "tests/test_lol_operational_entrypoint.py",
+    "tests/test_operational_runner.py",
+    "tests/test_secret_redaction.py",
+    "tests/test_tools_provenance.py",
+    "tests/test_vendor_byte_audit.py",
+    "tools_provenance.py",
+    "vendor_byte_audit.py"
+  ],
+  "excluded_files": [
+    "TOOLS_MANIFEST.json",
+    "VERSION"
+  ],
+  "generated_at_utc": "2026-07-15T00:00:00Z",
+  "release_commit": null
+}
