@@ -59,7 +59,7 @@ def test_dirty_strict_fails_and_explicit_permissive_reports_real_state(tmp_path:
         provenance.collect_tools_provenance(root, strict=True)
     observed = provenance.collect_tools_provenance(root, strict=False)
     assert observed["worktree_clean"] is False
-    assert observed["content_hash"] != json.loads((root / provenance.MANIFEST_NAME).read_text(encoding="utf-8"))["content_hash"]
+    assert observed["content_hash"] == json.loads((root / provenance.MANIFEST_NAME).read_text(encoding="utf-8"))["content_hash"]
 
 
 def test_missing_git_version_and_invalid_manifest_fail_closed(tmp_path: Path) -> None:

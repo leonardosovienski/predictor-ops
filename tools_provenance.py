@@ -40,6 +40,15 @@ def _git(root: Path, *args: str) -> str:
     return result.stdout
 
 
+def _git_bytes(root: Path, *args: str) -> bytes:
+    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True,
+                            check=False)
+    if result.returncode != 0:
+        detail = result.stderr.decode("utf-8", errors="replace").strip() or "git command failed"
+        raise ToolsProvenanceError(detail)
+    return result.stdout
+
+
 def _tracked_files(root: Path) -> list[str]:
     files = [line for line in _git(root, "ls-files").splitlines()
              if line and line not in HASH_EXCLUDED]
@@ -51,18 +60,19 @@ def _tracked_files(root: Path) -> list[str]:
 def content_hash(root: Path, files: list[str] | None = None) -> str:
     """Return the deterministic release fingerprint for tracked content.
 
-    The byte stream is sorted UTF-8 relative path, NUL, raw file bytes, NUL.
+    The byte stream is sorted UTF-8 relative path, NUL, raw Git-index blob,
+    NUL. Git blobs make the release identity independent of checkout line-end
+    normalization. Strict mode separately rejects a dirty worktree.
     ``VERSION`` and the release manifest are excluded to avoid a circular
     fingerprint; both remain separately validated release metadata.
     """
     digest = hashlib.sha256()
     for relative in files if files is not None else _tracked_files(root):
-        path = root / relative
-        if not path.is_file():
+        if not (root / relative).is_file():
             raise ToolsProvenanceError(f"tracked content file is missing: {relative}")
         digest.update(relative.encode("utf-8"))
         digest.update(b"\0")
-        digest.update(path.read_bytes())
+        digest.update(_git_bytes(root, "show", f":{relative}"))
         digest.update(b"\0")
     return digest.hexdigest()
 
@@ -84,7 +94,7 @@ def collect_tools_provenance(root: Path | None = None, *, strict: bool = True) -
     """Return validated runtime provenance for the local tools checkout.
 
     Strict mode rejects a dirty checkout and a manifest/content mismatch.
-    Explicit permissive mode preserves the real computed hash and marks the
+    Explicit permissive mode preserves the release fingerprint and marks the
     checkout dirty; it is for compatibility diagnostics, never the default.
     """
     root = (root or default_tools_root()).resolve()
@@ -126,4 +136,3 @@ def collect_tools_provenance(root: Path | None = None, *, strict: bool = True) -
         "worktree_clean": clean,
         "generated_at_utc": utc_now(),
     }
-

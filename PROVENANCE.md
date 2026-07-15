@@ -35,7 +35,9 @@ release artifact.
 
 The algorithm name is `sha256-path-nul-content-nul-v1`. For each lexicographically
 sorted, Git-tracked included file, it feeds its UTF-8 relative path, a NUL byte,
-its raw bytes, and a final NUL byte to SHA-256. `VERSION` and
+its raw Git-index blob, and a final NUL byte to SHA-256. This makes the
+fingerprint invariant to checkout line-ending normalization; strict mode
+separately rejects a dirty worktree. `VERSION` and
 `TOOLS_MANIFEST.json` are excluded so the release metadata can state the hash
 without self-reference. The manifest records the exact included file list,
 excluded list, algorithm, version, and expected fingerprint. It contains no
