@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.log
+*.jsonl
+*.heartbeat.json
+*.lock
+.env
+.env.*
+!*.env.example
