@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.3 — 2026-07-16
+
+Raises the validated CI coverage gate to 80% after adding health and redaction
+CLI regression tests. Ignores local coverage databases. The active workspace
+health configuration is backed up as `audit/task_backups/HEALTH_TASKS.1.2.3.json`.
+
 ## 1.2.2 — 2026-07-16
 
 Corrects the CI coverage threshold to 75%, validated against the current

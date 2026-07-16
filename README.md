@@ -28,7 +28,7 @@ records also expose additive output, lock, and timeout-termination diagnostics.
 `--tasks-file`. Run
 `python tools/release_check.py` from the workspace root to verify workspace
 tests, a clean isolated clone, and strict clone provenance before a release.
-The CI job installs test-only coverage tooling and requires at least 75% line
+The CI job installs test-only coverage tooling and requires at least 80% line
 coverage; runtime remains stdlib-only.
 
 The clone-local test suite runs utility tests directly. Consumer entrypoint

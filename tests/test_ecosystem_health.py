@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from tools import ecosystem_health as health
 
@@ -76,3 +77,13 @@ def test_load_tasks_validates_declarative_configuration(tmp_path: Path) -> None:
         pass
     else:
         raise AssertionError("invalid task configuration must fail closed")
+
+
+def test_query_task_and_main_use_declarative_configuration(monkeypatch, tmp_path: Path, capsys) -> None:
+    source = tmp_path / "tasks.json"
+    source.write_text('[{"task_name":"x","project":"workspace","expected_enabled":false,"max_age_hours":24}]', encoding="utf-8")
+    monkeypatch.setattr(health.subprocess, "run", lambda *_args, **_kwargs: SimpleNamespace(returncode=0, stdout='{"TaskName":"x"}'))
+    assert health.query_task("x") == {"TaskName": "x"}
+    monkeypatch.setattr(health, "health_report", lambda **_: {"overall_status": "HEALTHY", "exit_code": 0, "automations": []})
+    assert health.main(["--json", "--tasks-file", str(source)]) == 0
+    assert json.loads(capsys.readouterr().out)["overall_status"] == "HEALTHY"

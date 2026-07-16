@@ -105,6 +105,16 @@ def test_no_fictitious_secret_remains_in_generated_artifacts(tmp_path: Path) -> 
             assert FAKE_TOKEN not in path.read_text(encoding="utf-8")
 
 
+def test_cli_scan_and_dry_run_are_redacted(tmp_path: Path, monkeypatch, capsys) -> None:
+    source = _write_fake_source(tmp_path)
+    monkeypatch.setenv("FICTITIOUS_API_KEY", FAKE_KEY)
+    assert redaction.main(["scan", str(source)]) == 0
+    scanned = capsys.readouterr().out
+    assert FAKE_KEY not in scanned and FAKE_TOKEN not in scanned
+    assert redaction.main(["sanitize", str(source), "--dry-run"]) == 0
+    assert '"dry_run": true' in capsys.readouterr().out
+
+
 def _write_fake_source(tmp_path: Path) -> Path:
     source = tmp_path / "source.log"
     source.write_text(f"token={FAKE_TOKEN}\n", encoding="utf-8")
