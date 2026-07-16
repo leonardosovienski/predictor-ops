@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2 — 2026-07-16
+
+Corrects the CI coverage threshold to 75%, validated against the current
+77% baseline, so the new gate protects against regression without rejecting
+the release it is intended to verify.
+
 ## 1.2.1 — 2026-07-16
 
 Moves the default health task configuration to the workspace boundary, keeping

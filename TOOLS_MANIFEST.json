@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "tools_version": "1.2.1",
-  "content_hash": "8e6fe587a26352954d0e169be24e10568197a4179f599fc41cfad76c860c3c0c",
+  "tools_version": "1.2.2",
+  "content_hash": "09a314e42f1baba45c2222813cdd83a0b95d3ececc19225f095b97a2ac33e168",
   "hash_algorithm": "sha256-path-nul-content-nul-v1",
   "included_files": [
     ".github/workflows/tools-tests.yml",
