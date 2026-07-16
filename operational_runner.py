@@ -208,41 +208,53 @@ def _lock_is_stale(path: Path, maximum_age: float) -> bool:
         return False
 
 
-def _acquire_run_lock(path: Path, run_id: str, stale_after: float) -> bool:
+def _acquire_run_lock(path: Path, run_id: str, stale_after: float) -> dict[str, Any]:
     """Acquire a lock, reclaiming only locks older than the declared policy."""
+    reclaimed_age: float | None = None
     for _ in range(2):
         try:
             descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         except FileExistsError:
-            if not _lock_is_stale(path, stale_after):
-                return False
+            try:
+                age = max(0.0, time.time() - path.stat().st_mtime)
+            except FileNotFoundError:
+                continue
+            if age < stale_after:
+                return {"acquired": False, "path": str(path.resolve()), "reclaimed": False, "age_seconds": round(age, 3)}
             try:
                 path.unlink()
             except FileNotFoundError:
                 pass
+            reclaimed_age = age
             continue
         try:
             os.write(descriptor, json.dumps({"run_id": run_id, "pid": os.getpid(), "created_at_utc": utc_now()}, sort_keys=True).encode("ascii"))
             os.fsync(descriptor)
         finally:
             os.close(descriptor)
-        return True
-    return False
+        return {"acquired": True, "path": str(path.resolve()), "reclaimed": reclaimed_age is not None, "reclaimed_age_seconds": round(reclaimed_age, 3) if reclaimed_age is not None else None}
+    return {"acquired": False, "path": str(path.resolve()), "reclaimed": False, "age_seconds": None}
 
 
-def _terminate_process_tree(child: subprocess.Popen[bytes]) -> None:
+def _terminate_process_tree(child: subprocess.Popen[bytes]) -> dict[str, Any]:
     """Terminate the child and descendants created by this runner."""
+    result: dict[str, Any] = {"attempted": True, "method": "taskkill" if os.name == "nt" else "process_group", "completed": False, "error": None}
     if child.poll() is not None:
-        return
+        result["completed"] = True
+        return result
     try:
         if os.name == "nt":
-            subprocess.run(["taskkill", "/PID", str(child.pid), "/T", "/F"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=10)
+            completed = subprocess.run(["taskkill", "/PID", str(child.pid), "/T", "/F"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=10)
+            result["taskkill_exit_code"] = completed.returncode
         else:
             os.killpg(child.pid, signal.SIGKILL)
-    except (OSError, subprocess.SubprocessError):
-        pass
+    except (OSError, subprocess.SubprocessError) as exc:
+        result["error"] = safe_redact_text(exc)
     if child.poll() is None:
         child.kill()
+        result["fallback"] = "child_kill"
+    result["completed"] = child.poll() is not None
+    return result
 
 
 def _drain_redacted_output(child: subprocess.Popen[bytes], output: Any, sensitive_values: Sequence[str], max_output_bytes: int) -> dict[str, Any]:
@@ -319,7 +331,9 @@ def run(args: argparse.Namespace) -> int:
         append_event(event_log, finished)
         return 3
 
-    if not _acquire_run_lock(lock_path, record["run_id"], args.lock_stale_after):
+    lock = _acquire_run_lock(lock_path, record["run_id"], args.lock_stale_after)
+    record["lock"] = lock
+    if not lock["acquired"]:
         finished = _finish(record, "SKIPPED", 4, started_monotonic, f"another instance holds lock: {lock_path}", sensitive_values)
         write_heartbeat(heartbeat, finished)
         append_event(event_log, finished)
@@ -344,13 +358,15 @@ def run(args: argparse.Namespace) -> int:
                 try:
                     child.wait(timeout=args.timeout)
                 except subprocess.TimeoutExpired:
-                    _terminate_process_tree(child)
+                    record["termination"] = _terminate_process_tree(child)
                     child.wait()
                     drain["thread"].join()
+                    record["output"] = {"truncated": drain["truncated"], "bytes_persisted": drain["written"], "limit_bytes": args.max_output_bytes}
                     if drain["truncated"]:
                         output.write("\n[OUTPUT_TRUNCATED]\n")
                     raise
                 drain["thread"].join()
+                record["output"] = {"truncated": drain["truncated"], "bytes_persisted": drain["written"], "limit_bytes": args.max_output_bytes}
                 if drain["error"] is not None:
                     raise drain["error"]
                 if drain["truncated"]:

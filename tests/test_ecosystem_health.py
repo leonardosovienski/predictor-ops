@@ -63,3 +63,16 @@ def test_invalid_scheduler_result_is_unknown_instead_of_crashing(monkeypatch, tm
     invalid = {"Enabled": True, "LastTaskResult": "not-a-number"}
     item = health.assess_task("x", "p", True, 36, invalid, None, NOW)
     assert item["status"] == "UNKNOWN"
+
+
+def test_load_tasks_validates_declarative_configuration(tmp_path: Path) -> None:
+    source = tmp_path / "tasks.json"
+    source.write_text('[{"task_name":"x","project":"workspace","expected_enabled":true,"max_age_hours":24}]', encoding="utf-8")
+    assert health.load_tasks(source) == (("x", "workspace", True, 24),)
+    source.write_text('{"task_name":"x"}', encoding="utf-8")
+    try:
+        health.load_tasks(source)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("invalid task configuration must fail closed")

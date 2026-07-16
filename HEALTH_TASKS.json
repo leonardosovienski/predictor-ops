@@ -1,0 +1,11 @@
+[
+  {"task_name": "GarimpoFase1", "project": "previsao-cripto", "expected_enabled": true, "max_age_hours": 36},
+  {"task_name": "GarimpoV3Daily", "project": "previsao-cripto", "expected_enabled": true, "max_age_hours": 36},
+  {"task_name": "cripto-watchdog-coleta", "project": "previsao-cripto", "expected_enabled": true, "max_age_hours": 36},
+  {"task_name": "brasileirao-sombra-manha", "project": "brasileirao-predictor", "expected_enabled": true, "max_age_hours": 36},
+  {"task_name": "brasileirao-sombra-noite", "project": "brasileirao-predictor", "expected_enabled": true, "max_age_hours": 36},
+  {"task_name": "cs-ratings-semanal", "project": "cs-predictor", "expected_enabled": true, "max_age_hours": 216},
+  {"task_name": "lol-ratings-semanal", "project": "lol-predictor", "expected_enabled": true, "max_age_hours": 216},
+  {"task_name": "ecosystem-health-semanal", "project": "workspace", "expected_enabled": true, "max_age_hours": 216},
+  {"task_name": "GarimpoInvestimentos-ColetaDiaria", "project": "previsao-cripto", "expected_enabled": false, "max_age_hours": 36}
+]

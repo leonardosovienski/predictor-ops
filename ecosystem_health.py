@@ -1,4 +1,4 @@
-"""Read-only health check for the known operational automations."""
+"""Read-only health check for configured operational automations."""
 from __future__ import annotations
 
 import argparse
@@ -11,18 +11,26 @@ from typing import Any, Callable
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_TASKS_FILE = Path(__file__).with_name("HEALTH_TASKS.json")
 
-TASKS = (
-    ("GarimpoFase1", "previsao-cripto", True, 36),
-    ("GarimpoV3Daily", "previsao-cripto", True, 36),
-    ("cripto-watchdog-coleta", "previsao-cripto", True, 36),
-    ("brasileirao-sombra-manha", "brasileirao-predictor", True, 36),
-    ("brasileirao-sombra-noite", "brasileirao-predictor", True, 36),
-    ("cs-ratings-semanal", "cs-predictor", True, 216),
-    ("lol-ratings-semanal", "lol-predictor", True, 216),
-    ("ecosystem-health-semanal", "workspace", True, 216),
-    ("GarimpoInvestimentos-ColetaDiaria", "previsao-cripto", False, 36),
-)
+
+def load_tasks(path: Path = DEFAULT_TASKS_FILE) -> tuple[tuple[str, str, bool, int], ...]:
+    """Load declarative task metadata; no domain rules are interpreted here."""
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, list):
+        raise ValueError("health task configuration must be a JSON array")
+    tasks: list[tuple[str, str, bool, int]] = []
+    for item in value:
+        if not isinstance(item, dict):
+            raise ValueError("each health task must be a JSON object")
+        name, project, enabled, max_age = item.get("task_name"), item.get("project"), item.get("expected_enabled"), item.get("max_age_hours")
+        if not isinstance(name, str) or not name or not isinstance(project, str) or not project or not isinstance(enabled, bool) or not isinstance(max_age, int) or max_age <= 0:
+            raise ValueError("health task has invalid task_name, project, expected_enabled, or max_age_hours")
+        tasks.append((name, project, enabled, max_age))
+    return tuple(tasks)
+
+
+TASKS = load_tasks()
 
 
 def heartbeat_path(task_name: str, project: str) -> Path:
@@ -112,9 +120,10 @@ def load_heartbeat(path: Path) -> dict[str, Any] | None:
         return None
 
 
-def health_report(provider: Callable[[str], dict[str, Any] | None] = query_task, now: datetime | None = None) -> dict[str, Any]:
+def health_report(provider: Callable[[str], dict[str, Any] | None] = query_task, now: datetime | None = None, tasks: tuple[tuple[str, str, bool, int], ...] | None = None) -> dict[str, Any]:
     checked_at = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
-    entries = [assess_task(name, project, enabled, hours, provider(name), load_heartbeat(heartbeat_path(name, project)), checked_at) for name, project, enabled, hours in TASKS]
+    tasks = TASKS if tasks is None else tasks
+    entries = [assess_task(name, project, enabled, hours, provider(name), load_heartbeat(heartbeat_path(name, project)), checked_at) for name, project, enabled, hours in tasks]
     statuses = {entry["status"] for entry in entries}
     if "FAILED" in statuses or "PARTIAL" in statuses:
         code, overall = 1, "FAILED"
@@ -130,10 +139,11 @@ def health_report(provider: Callable[[str], dict[str, Any] | None] = query_task,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Read Scheduler state and atomic automation heartbeats without executing tasks.")
     parser.add_argument("--json", action="store_true", help="emit deterministic JSON only")
+    parser.add_argument("--tasks-file", type=Path, default=DEFAULT_TASKS_FILE, help="declarative JSON task configuration")
     args = parser.parse_args(argv)
     try:
-        report = health_report()
-    except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
+        report = health_report(tasks=load_tasks(args.tasks_file))
+    except (OSError, ValueError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
         report = {"overall_status": "CONFIGURATION_ERROR", "exit_code": 2, "error": str(exc), "automations": []}
     if args.json:
         print(json.dumps(report, ensure_ascii=False, sort_keys=True))

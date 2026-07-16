@@ -17,10 +17,16 @@ unidentifiable, dirty, or manifest-mismatched tools checkout. Permissive mode
 must be explicitly requested and reports the real dirty state for diagnostic
 compatibility. Historical artifacts are never rewritten.
 
-Since 1.1.1, strict setup failures are published as terminal failed records,
+Since 1.2.0, strict setup failures are published as terminal failed records,
 stale run locks are recoverable after a configurable interval, timeouts end
 the child process tree, JSONL appends are serialized and durable, and persisted
-child output is bounded by the optional `--max-output-bytes` flag.
+child output is bounded by the optional `--max-output-bytes` flag. Terminal
+records also expose additive output, lock, and timeout-termination diagnostics.
+
+`ecosystem_health.py` loads its task list from `HEALTH_TASKS.json`; callers may
+pass a separate declarative file through `--tasks-file`. Run
+`python tools/release_check.py` from the workspace root to verify workspace
+tests, a clean isolated clone, and strict clone provenance before a release.
 
 The clone-local test suite runs utility tests directly. Consumer entrypoint
 contract tests run automatically only when sibling projects are present in the

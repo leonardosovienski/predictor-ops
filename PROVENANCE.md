@@ -6,7 +6,7 @@ terminal operational JSONL record:
 ```json
 {
   "tools_provenance": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "commit": "Git HEAD of this tools checkout",
     "content_hash": "SHA-256 release fingerprint",
     "worktree_clean": true,
@@ -40,7 +40,9 @@ configurable `--lock-stale-after` interval (24 hours by default) may be
 reclaimed. Timeout termination targets the runner-created process group/tree.
 JSONL appends are serialized and fsynced. Child output is redacted while it is
 drained and bounded by `--max-output-bytes` (10 MiB by default); discarded
-output is never persisted.
+output is never persisted. Terminal records add `output` (persisted-byte limit
+and truncation state), `lock` (path and stale-lock recovery decision), and,
+when relevant, `termination` (timeout process-tree termination diagnostics).
 
 ## Fingerprint
 

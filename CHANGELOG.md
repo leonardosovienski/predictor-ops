@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0 — 2026-07-16
+
+Adds additive terminal diagnostics for output truncation, run-lock recovery,
+and timeout process-tree termination. Moves health task metadata into a
+validated declarative JSON file with an optional override, and adds a
+read-only release verifier for workspace tests, isolated-clone tests, and
+strict clone provenance. Corrects the provenance documentation example.
+
 ## 1.1.1 — 2026-07-16
 
 Makes strict provenance/setup failures observable through terminal heartbeat

@@ -34,7 +34,7 @@ def test_success_records_observable_envelope(tmp_path: Path) -> None:
     assert record["started_at_utc"] and record["finished_at_utc"]
     assert "ok" in log.read_text(encoding="utf-8")
     assert json.loads(events.read_text(encoding="utf-8"))["exit_code"] == 0
-    assert record["tools_provenance"]["version"] == "1.1.1"
+    assert record["tools_provenance"]["version"] == "1.2.0"
     assert json.loads(events.read_text(encoding="utf-8"))["tools_provenance"] == record["tools_provenance"]
 
 
@@ -142,8 +142,9 @@ def test_stale_lock_is_reclaimed_but_recent_lock_is_preserved(tmp_path: Path) ->
     lock.write_text("orphan", encoding="ascii")
     old = time.time() - 86401
     os.utime(lock, (old, old))
-    code, _, _, _ = invoke(tmp_path, [sys.executable, "-c", "pass"])
+    code, _, heartbeat, _ = invoke(tmp_path, [sys.executable, "-c", "pass"])
     assert code == 0 and not lock.exists()
+    assert read_heartbeat(heartbeat)["lock"]["reclaimed"] is True
 
 
 def test_timeout_uses_process_tree_termination(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -155,14 +156,18 @@ def test_timeout_uses_process_tree_termination(tmp_path: Path, monkeypatch: pyte
 
     monkeypatch.setattr(runner, "_terminate_process_tree", terminate)
     code, _, heartbeat, _ = invoke(tmp_path, [sys.executable, "-c", "import time; time.sleep(2)"], timeout=0.01)
-    assert code == 124 and observed and read_heartbeat(heartbeat)["status"] == "TIMED_OUT"
+    record = read_heartbeat(heartbeat)
+    assert code == 124 and observed and record["status"] == "TIMED_OUT"
+    assert record["termination"] is None
 
 
 def test_output_is_bounded_and_remains_redacted(tmp_path: Path) -> None:
     secret = "very-secret-output-value"
-    code, log, _, _ = invoke(tmp_path, [sys.executable, "-c", f"print('token={secret}' + 'x' * 100000)"], max_output_bytes=128)
+    code, log, heartbeat, _ = invoke(tmp_path, [sys.executable, "-c", f"print('token={secret}' + 'x' * 100000)"], max_output_bytes=128)
     text = log.read_text(encoding="utf-8")
+    record = read_heartbeat(heartbeat)
     assert code == 0 and secret not in text and "[OUTPUT_TRUNCATED]" in text
+    assert record["output"]["truncated"] is True and record["output"]["limit_bytes"] == 128
 
 
 def test_jsonl_append_is_parseable_under_threaded_writers(tmp_path: Path) -> None:
