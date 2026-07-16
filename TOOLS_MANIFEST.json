@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "tools_version": "1.1.0",
-  "content_hash": "40b8a99d28138842090b951fac1158255d231e73260033cb8dd57142db7effa6",
+  "tools_version": "1.1.1",
+  "content_hash": "8add5b5df6573ce898de25f1829db4c7201d14329880177524ad04632f207c7d",
   "hash_algorithm": "sha256-path-nul-content-nul-v1",
   "included_files": [
     ".gitignore",

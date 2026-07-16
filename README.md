@@ -17,6 +17,11 @@ unidentifiable, dirty, or manifest-mismatched tools checkout. Permissive mode
 must be explicitly requested and reports the real dirty state for diagnostic
 compatibility. Historical artifacts are never rewritten.
 
+Since 1.1.1, strict setup failures are published as terminal failed records,
+stale run locks are recoverable after a configurable interval, timeouts end
+the child process tree, JSONL appends are serialized and durable, and persisted
+child output is bounded by the optional `--max-output-bytes` flag.
+
 The clone-local test suite runs utility tests directly. Consumer entrypoint
 contract tests run automatically only when sibling projects are present in the
 workspace; they are explicitly skipped in an isolated clone.

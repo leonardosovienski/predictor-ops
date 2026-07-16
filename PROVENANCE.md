@@ -1,6 +1,6 @@
 # Tools provenance contract
 
-`operational_runner` 1.1 emits this additive object in every heartbeat and
+`operational_runner` 1.1.1 emits this additive object in every heartbeat and
 terminal operational JSONL record:
 
 ```json
@@ -29,7 +29,18 @@ identity, manifest, included files, or release fingerprint cannot be
 validated, or when the tools checkout is dirty. `--provenance-mode permissive`
 is an explicit diagnostic compatibility mode: it preserves the actual computed
 hash and `worktree_clean: false` instead of representing a dirty checkout as a
-release artifact.
+release artifact. A strict setup failure is still published as a terminal
+`FAILED` heartbeat and JSONL event with `tools_provenance.status` equal to
+`UNAVAILABLE`; it never launches the child or claims a validated release.
+
+## Operational bounds
+
+Run locks contain diagnostic ownership metadata and locks older than the
+configurable `--lock-stale-after` interval (24 hours by default) may be
+reclaimed. Timeout termination targets the runner-created process group/tree.
+JSONL appends are serialized and fsynced. Child output is redacted while it is
+drained and bounded by `--max-output-bytes` (10 MiB by default); discarded
+output is never persisted.
 
 ## Fingerprint
 

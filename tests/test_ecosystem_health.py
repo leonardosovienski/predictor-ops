@@ -56,3 +56,10 @@ def test_json_serialization_is_deterministic(monkeypatch, tmp_path: Path) -> Non
     first = health.health_report(provider=lambda _: task(enabled=False), now=NOW)
     second = health.health_report(provider=lambda _: task(enabled=False), now=NOW)
     assert json.dumps(first, sort_keys=True) == json.dumps(second, sort_keys=True)
+
+
+def test_invalid_scheduler_result_is_unknown_instead_of_crashing(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(health, "heartbeat_path", lambda *_: tmp_path / "h.json")
+    invalid = {"Enabled": True, "LastTaskResult": "not-a-number"}
+    item = health.assess_task("x", "p", True, 36, invalid, None, NOW)
+    assert item["status"] == "UNKNOWN"

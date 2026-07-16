@@ -49,7 +49,8 @@ def query_task(task_name: str) -> dict[str, Any] | None:
     result = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script], capture_output=True, text=True, timeout=15, check=False)
     if result.returncode != 0:
         return None
-    return json.loads(result.stdout)
+    value = json.loads(result.stdout)
+    return value if isinstance(value, dict) else None
 
 
 def _parse_time(value: str | None) -> datetime | None:
@@ -73,7 +74,12 @@ def assess_task(task_name: str, project: str, expected_enabled: bool, max_age_ho
     if not task.get("Enabled", False):
         item.update(status="FAILED", reason="task is disabled")
         return item
-    if int(task.get("LastTaskResult", 0)) != 0:
+    try:
+        scheduler_result = int(task.get("LastTaskResult", 0))
+    except (TypeError, ValueError):
+        item.update(status="UNKNOWN", reason="Task Scheduler LastTaskResult is invalid")
+        return item
+    if scheduler_result != 0:
         item.update(status="FAILED", reason=f"LastTaskResult={task.get('LastTaskResult')}")
         return item
     if heartbeat is None:

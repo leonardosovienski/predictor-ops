@@ -10,8 +10,10 @@ import argparse
 import json
 import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
+import threading
 import time
 import uuid
 from datetime import datetime, timezone
@@ -65,9 +67,49 @@ def write_heartbeat(path: Path, payload: dict[str, Any]) -> None:
 
 
 def append_event(path: Path, payload: dict[str, Any]) -> None:
+    """Append one durable JSONL record serialized across runner processes."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8", newline="\n") as handle:
-        handle.write(json.dumps(safe_redact_mapping(payload, collect_sensitive_values(os.environ)), ensure_ascii=False, sort_keys=True) + "\n")
+    encoded = (json.dumps(safe_redact_mapping(payload, collect_sensitive_values(os.environ)), ensure_ascii=False, sort_keys=True) + "\n").encode("utf-8")
+    lock_path = path.with_name(f".{path.name}.append.lock")
+    deadline = time.monotonic() + 30
+    lock_descriptor: int | None = None
+    while lock_descriptor is None:
+        try:
+            lock_descriptor = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except (FileExistsError, PermissionError):
+            try:
+                stale = time.time() - lock_path.stat().st_mtime >= 300
+            except FileNotFoundError:
+                continue
+            if stale:
+                try:
+                    lock_path.unlink()
+                except FileNotFoundError:
+                    pass
+                continue
+            if time.monotonic() >= deadline:
+                raise OSError(f"timed out waiting for JSONL append lock: {lock_path}")
+            time.sleep(0.01)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND
+    if hasattr(os, "O_BINARY"):
+        flags |= os.O_BINARY
+    try:
+        os.close(lock_descriptor)
+        descriptor = os.open(path, flags, 0o600)
+        # A single append write prevents records from being interleaved by
+        # independent runners sharing this JSONL file.  Partial writes are
+        # treated as an operational failure rather than emitting invalid JSONL.
+        try:
+            if os.write(descriptor, encoded) != len(encoded):
+                raise OSError("incomplete JSONL event write")
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    finally:
+        try:
+            lock_path.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def _core_summary(project_path: Path) -> dict[str, str]:
@@ -134,13 +176,137 @@ def _finish(record: dict[str, Any], status: str, exit_code: int, started: float,
     return record
 
 
+def _configuration_failure_record(args: argparse.Namespace, run_id: str, started_at: str, started: float, error: Exception, sensitive_values: Sequence[str]) -> dict[str, Any]:
+    """Create an observable fail-closed result when setup cannot be validated."""
+    command = redact_command(args.command, sensitive_values)
+    record: dict[str, Any] = {
+        "run_id": run_id,
+        "task_name": args.task,
+        "project": args.project,
+        "started_at_utc": started_at,
+        "finished_at_utc": None,
+        "duration_seconds": None,
+        "status": "STARTED",
+        "exit_code": None,
+        "command": command,
+        "script_path": command[0] if command else None,
+        "working_directory": str(Path(args.cwd).resolve()),
+        "python_executable": command[0] if command else sys.executable,
+        "core_provenance": _core_summary(Path(args.cwd).resolve()),
+        "expected_artifact": str(Path(args.expected_artifact).resolve()) if args.expected_artifact else None,
+        "log_path": str(Path(args.log).resolve()),
+        "heartbeat_path": str(Path(args.heartbeat).resolve()),
+        "tools_provenance": {"status": "UNAVAILABLE", "error": safe_redact_text(error, sensitive_values)[:1000]},
+    }
+    return _finish(record, "FAILED", 3, started, str(error), sensitive_values)
+
+
+def _lock_is_stale(path: Path, maximum_age: float) -> bool:
+    try:
+        return time.time() - path.stat().st_mtime >= maximum_age
+    except FileNotFoundError:
+        return False
+
+
+def _acquire_run_lock(path: Path, run_id: str, stale_after: float) -> bool:
+    """Acquire a lock, reclaiming only locks older than the declared policy."""
+    for _ in range(2):
+        try:
+            descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            if not _lock_is_stale(path, stale_after):
+                return False
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
+            continue
+        try:
+            os.write(descriptor, json.dumps({"run_id": run_id, "pid": os.getpid(), "created_at_utc": utc_now()}, sort_keys=True).encode("ascii"))
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        return True
+    return False
+
+
+def _terminate_process_tree(child: subprocess.Popen[bytes]) -> None:
+    """Terminate the child and descendants created by this runner."""
+    if child.poll() is not None:
+        return
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/PID", str(child.pid), "/T", "/F"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=10)
+        else:
+            os.killpg(child.pid, signal.SIGKILL)
+    except (OSError, subprocess.SubprocessError):
+        pass
+    if child.poll() is None:
+        child.kill()
+
+
+def _drain_redacted_output(child: subprocess.Popen[bytes], output: Any, sensitive_values: Sequence[str], max_output_bytes: int) -> dict[str, Any]:
+    """Drain output without keeping an unbounded raw child stream in memory."""
+    state: dict[str, Any] = {"written": 0, "truncated": False, "error": None}
+    # Keep enough raw suffix to avoid persisting a secret split across chunks.
+    suffix = max(8192, max((len(item) for item in sensitive_values), default=0) + 1024)
+
+    def write_redacted(raw: bytes) -> None:
+        if not raw:
+            return
+        remaining = max_output_bytes - state["written"]
+        if remaining <= 0:
+            state["truncated"] = True
+            return
+        # Only bytes that could be persisted (plus the secret-boundary
+        # suffix) need redaction.  The rest is drained and discarded.
+        text = safe_redact_text(raw[:remaining + suffix], sensitive_values)
+        encoded = text.encode("utf-8", errors="replace")
+        if len(encoded) > remaining:
+            encoded = encoded[:remaining]
+            state["truncated"] = True
+        output.write(encoded.decode("utf-8", errors="replace"))
+        state["written"] += len(encoded)
+
+    def drain() -> None:
+        pending = b""
+        try:
+            assert child.stdout is not None
+            while True:
+                # Use the raw pipe rather than BufferedReader.read(): on
+                # Windows the latter may wait for its requested buffer size
+                # and deadlock a verbose child before it can close the pipe.
+                chunk = child.stdout.raw.read(65536)
+                if not chunk:
+                    break
+                pending += chunk
+                if len(pending) > suffix:
+                    write_redacted(pending[:-suffix])
+                    pending = pending[-suffix:]
+            write_redacted(pending)
+        except (OSError, ValueError) as exc:
+            state["error"] = exc
+
+    thread = threading.Thread(target=drain, name="operational-runner-output", daemon=True)
+    thread.start()
+    state["thread"] = thread
+    return state
+
+
 def run(args: argparse.Namespace) -> int:
     if not args.command:
         raise ValueError("a child command is required after --")
     cwd = Path(args.cwd)
     started_monotonic = time.monotonic()
     sensitive_values = collect_sensitive_values(os.environ)
-    record = _base_record(args, uuid.uuid4().hex, utc_now(), sensitive_values)
+    run_id, started_at = uuid.uuid4().hex, utc_now()
+    try:
+        record = _base_record(args, run_id, started_at, sensitive_values)
+    except (ValueError, OSError, ToolsProvenanceError) as exc:
+        finished = _configuration_failure_record(args, run_id, started_at, started_monotonic, exc, sensitive_values)
+        write_heartbeat(Path(args.heartbeat), finished)
+        append_event(Path(args.event_log), finished)
+        return 3
     heartbeat = Path(args.heartbeat)
     event_log = Path(args.event_log)
     log_path = Path(args.log)
@@ -153,17 +319,13 @@ def run(args: argparse.Namespace) -> int:
         append_event(event_log, finished)
         return 3
 
-    try:
-        lock_fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except FileExistsError:
+    if not _acquire_run_lock(lock_path, record["run_id"], args.lock_stale_after):
         finished = _finish(record, "SKIPPED", 4, started_monotonic, f"another instance holds lock: {lock_path}", sensitive_values)
         write_heartbeat(heartbeat, finished)
         append_event(event_log, finished)
         return 4
 
     try:
-        os.write(lock_fd, record["run_id"].encode("ascii"))
-        os.close(lock_fd)
         write_heartbeat(heartbeat, record)
         log_path.parent.mkdir(parents=True, exist_ok=True)
         environment = os.environ.copy()
@@ -172,14 +334,27 @@ def run(args: argparse.Namespace) -> int:
             output.write(f"{record['started_at_utc']} STARTED {record['task_name']} run_id={record['run_id']}\n")
             output.flush()
             try:
-                child = subprocess.Popen(args.command, cwd=str(cwd), env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                popen_options: dict[str, Any] = {"cwd": str(cwd), "env": environment, "stdout": subprocess.PIPE, "stderr": subprocess.STDOUT}
+                if os.name == "nt":
+                    popen_options["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+                else:
+                    popen_options["start_new_session"] = True
+                child = subprocess.Popen(args.command, **popen_options)
+                drain = _drain_redacted_output(child, output, sensitive_values, args.max_output_bytes)
                 try:
-                    captured, _ = child.communicate(timeout=args.timeout)
+                    child.wait(timeout=args.timeout)
                 except subprocess.TimeoutExpired:
-                    child.kill()
-                    child.communicate()
+                    _terminate_process_tree(child)
+                    child.wait()
+                    drain["thread"].join()
+                    if drain["truncated"]:
+                        output.write("\n[OUTPUT_TRUNCATED]\n")
                     raise
-                output.write(safe_redact_text(captured, sensitive_values))
+                drain["thread"].join()
+                if drain["error"] is not None:
+                    raise drain["error"]
+                if drain["truncated"]:
+                    output.write("\n[OUTPUT_TRUNCATED]\n")
                 child_exit = child.returncode
                 if child_exit == 0 and args.expected_artifact and not Path(args.expected_artifact).exists():
                     finished = _finish(record, "PARTIAL", 1, started_monotonic, "expected artifact was not found", sensitive_values)
@@ -215,6 +390,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--expected-artifact")
     parser.add_argument("--timeout", type=float)
     parser.add_argument("--lock")
+    parser.add_argument("--lock-stale-after", type=float, default=86400.0, help="seconds before an orphaned run lock may be reclaimed (default: 86400)")
+    parser.add_argument("--max-output-bytes", type=int, default=10 * 1024 * 1024, help="maximum redacted child output persisted per run")
     parser.add_argument("--partial-exit-code", type=int)
     parser.add_argument("--provenance-mode", choices=("strict", "permissive"), default="strict")
     parser.add_argument("--consumer-provenance-json", help="optional redacted JSON object supplied by the consumer")
@@ -234,6 +411,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     boundary = values.index("--")
     args = build_parser().parse_args(values[:boundary])
     args.command = values[boundary + 1:]
+    if args.timeout is not None and args.timeout <= 0:
+        print("operational_runner configuration error: --timeout must be positive", file=sys.stderr)
+        return 3
+    if args.lock_stale_after <= 0 or args.max_output_bytes <= 0:
+        print("operational_runner configuration error: lock and output limits must be positive", file=sys.stderr)
+        return 3
     try:
         return run(args)
     except (ValueError, OSError, ToolsProvenanceError) as exc:

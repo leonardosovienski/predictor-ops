@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sys
 import time
+import threading
+
+import pytest
 
 from tools import operational_runner as runner
 
@@ -30,7 +34,7 @@ def test_success_records_observable_envelope(tmp_path: Path) -> None:
     assert record["started_at_utc"] and record["finished_at_utc"]
     assert "ok" in log.read_text(encoding="utf-8")
     assert json.loads(events.read_text(encoding="utf-8"))["exit_code"] == 0
-    assert record["tools_provenance"]["version"] == "1.1.0"
+    assert record["tools_provenance"]["version"] == "1.1.1"
     assert json.loads(events.read_text(encoding="utf-8"))["tools_provenance"] == record["tools_provenance"]
 
 
@@ -120,3 +124,52 @@ def test_consumer_metadata_is_additive_and_redacted(tmp_path: Path) -> None:
     assert code == 0
     assert record["consumer_provenance"]["project_commit"] == "abc"
     assert record["consumer_provenance"]["token"] == "[REDACTED]"
+
+
+def test_strict_setup_failure_is_published_as_a_failed_operational_record(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(runner, "collect_tools_provenance", lambda **_: (_ for _ in ()).throw(runner.ToolsProvenanceError("manifest invalid")))
+    log, heartbeat, events = tmp_path / "human.log", tmp_path / "heartbeat.json", tmp_path / "events.jsonl"
+    code = runner.main(["run", "--task", "strict", "--project", "test", "--cwd", str(tmp_path), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--", sys.executable, "-c", "pass"])
+    record = read_heartbeat(heartbeat)
+    assert code == 3 and record["status"] == "FAILED"
+    assert record["tools_provenance"]["status"] == "UNAVAILABLE"
+    assert json.loads(events.read_text(encoding="utf-8"))["exit_code"] == 3
+
+
+def test_stale_lock_is_reclaimed_but_recent_lock_is_preserved(tmp_path: Path) -> None:
+    heartbeat = tmp_path / "heartbeat.json"
+    lock = heartbeat.with_suffix(".json.lock")
+    lock.write_text("orphan", encoding="ascii")
+    old = time.time() - 86401
+    os.utime(lock, (old, old))
+    code, _, _, _ = invoke(tmp_path, [sys.executable, "-c", "pass"])
+    assert code == 0 and not lock.exists()
+
+
+def test_timeout_uses_process_tree_termination(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    observed: list[int] = []
+
+    def terminate(child):
+        observed.append(child.pid)
+        child.kill()
+
+    monkeypatch.setattr(runner, "_terminate_process_tree", terminate)
+    code, _, heartbeat, _ = invoke(tmp_path, [sys.executable, "-c", "import time; time.sleep(2)"], timeout=0.01)
+    assert code == 124 and observed and read_heartbeat(heartbeat)["status"] == "TIMED_OUT"
+
+
+def test_output_is_bounded_and_remains_redacted(tmp_path: Path) -> None:
+    secret = "very-secret-output-value"
+    code, log, _, _ = invoke(tmp_path, [sys.executable, "-c", f"print('token={secret}' + 'x' * 100000)"], max_output_bytes=128)
+    text = log.read_text(encoding="utf-8")
+    assert code == 0 and secret not in text and "[OUTPUT_TRUNCATED]" in text
+
+
+def test_jsonl_append_is_parseable_under_threaded_writers(tmp_path: Path) -> None:
+    events = tmp_path / "events.jsonl"
+    threads = [threading.Thread(target=runner.append_event, args=(events, {"number": index})) for index in range(40)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert sorted(json.loads(line)["number"] for line in events.read_text(encoding="utf-8").splitlines()) == list(range(40))

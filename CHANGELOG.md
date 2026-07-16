@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.1 — 2026-07-16
+
+Makes strict provenance/setup failures observable through terminal heartbeat
+and JSONL records without weakening fail-closed behavior. Adds bounded,
+streamed redacted output; process-tree termination on timeout; recoverable
+stale locks; and serialized, fsynced JSONL appends. Health handling now treats
+an invalid Scheduler result as `UNKNOWN` instead of crashing. All additions
+preserve existing CLI calls and record fields.
+
 ## 1.1.0 — 2026-07-15
 
 Adds native, validated tools provenance to operational heartbeats and JSONL
