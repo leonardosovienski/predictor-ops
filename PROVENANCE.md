@@ -6,7 +6,7 @@ terminal operational JSONL record:
 ```json
 {
   "tools_provenance": {
-    "version": "1.2.0",
+    "version": "1.2.1",
     "commit": "Git HEAD of this tools checkout",
     "content_hash": "SHA-256 release fingerprint",
     "worktree_clean": true,
@@ -55,3 +55,8 @@ separately rejects a dirty worktree. `VERSION` and
 without self-reference. The manifest records the exact included file list,
 excluded list, algorithm, version, and expected fingerprint. It contains no
 secret values or absolute paths.
+
+`release_commit` remains null because embedding the SHA of the commit that
+contains this manifest would make the Git object self-referential. The actual
+commit is recorded by runtime provenance; `generated_at_utc` identifies when
+the release manifest was generated.

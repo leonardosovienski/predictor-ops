@@ -23,10 +23,13 @@ the child process tree, JSONL appends are serialized and durable, and persisted
 child output is bounded by the optional `--max-output-bytes` flag. Terminal
 records also expose additive output, lock, and timeout-termination diagnostics.
 
-`ecosystem_health.py` loads its task list from `HEALTH_TASKS.json`; callers may
-pass a separate declarative file through `--tasks-file`. Run
+`ecosystem_health.py` loads its task list from the workspace-level
+`HEALTH_TASKS.json`; callers may pass a separate declarative file through
+`--tasks-file`. Run
 `python tools/release_check.py` from the workspace root to verify workspace
 tests, a clean isolated clone, and strict clone provenance before a release.
+The CI job installs test-only coverage tooling and requires at least 80% line
+coverage; runtime remains stdlib-only.
 
 The clone-local test suite runs utility tests directly. Consumer entrypoint
 contract tests run automatically only when sibling projects are present in the

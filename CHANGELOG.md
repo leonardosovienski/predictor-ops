@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1 — 2026-07-16
+
+Moves the default health task configuration to the workspace boundary, keeping
+the tools repository domain-agnostic. Adds a test-only CI coverage gate at 80%
+without adding a runtime dependency, and documents the intentionally null
+release-commit field in the self-describing manifest.
+
 ## 1.2.0 — 2026-07-16
 
 Adds additive terminal diagnostics for output truncation, run-lock recovery,

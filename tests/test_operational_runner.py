@@ -34,7 +34,7 @@ def test_success_records_observable_envelope(tmp_path: Path) -> None:
     assert record["started_at_utc"] and record["finished_at_utc"]
     assert "ok" in log.read_text(encoding="utf-8")
     assert json.loads(events.read_text(encoding="utf-8"))["exit_code"] == 0
-    assert record["tools_provenance"]["version"] == "1.2.0"
+    assert record["tools_provenance"]["version"] == "1.2.1"
     assert json.loads(events.read_text(encoding="utf-8"))["tools_provenance"] == record["tools_provenance"]
 
 

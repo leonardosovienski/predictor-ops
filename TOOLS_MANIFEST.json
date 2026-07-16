@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "tools_version": "1.2.0",
-  "content_hash": "bd81ed7777c874f1fd82ac236a603be5b0f3ba50efe4f41ae617badea9c4e1e3",
+  "tools_version": "1.2.1",
+  "content_hash": "8e6fe587a26352954d0e169be24e10568197a4179f599fc41cfad76c860c3c0c",
   "hash_algorithm": "sha256-path-nul-content-nul-v1",
   "included_files": [
+    ".github/workflows/tools-tests.yml",
     ".gitignore",
     "CHANGELOG.md",
-    "HEALTH_TASKS.json",
     "PROVENANCE.md",
     "README.md",
     "core_provenance.py",
@@ -31,6 +31,6 @@
     "TOOLS_MANIFEST.json",
     "VERSION"
   ],
-  "generated_at_utc": "2026-07-15T00:00:00Z",
+  "generated_at_utc": "2026-07-16T19:30:00Z",
   "release_commit": null
 }

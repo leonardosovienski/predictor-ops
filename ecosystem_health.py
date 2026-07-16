@@ -11,7 +11,7 @@ from typing import Any, Callable
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_TASKS_FILE = Path(__file__).with_name("HEALTH_TASKS.json")
+DEFAULT_TASKS_FILE = ROOT / "HEALTH_TASKS.json"
 
 
 def load_tasks(path: Path = DEFAULT_TASKS_FILE) -> tuple[tuple[str, str, bool, int], ...]:
@@ -30,7 +30,9 @@ def load_tasks(path: Path = DEFAULT_TASKS_FILE) -> tuple[tuple[str, str, bool, i
     return tuple(tasks)
 
 
-TASKS = load_tasks()
+# Kept empty in the standalone repository.  Workspace configuration is loaded
+# lazily so isolated utility tests remain independent of domain task metadata.
+TASKS: tuple[tuple[str, str, bool, int], ...] = ()
 
 
 def heartbeat_path(task_name: str, project: str) -> Path:
@@ -122,7 +124,7 @@ def load_heartbeat(path: Path) -> dict[str, Any] | None:
 
 def health_report(provider: Callable[[str], dict[str, Any] | None] = query_task, now: datetime | None = None, tasks: tuple[tuple[str, str, bool, int], ...] | None = None) -> dict[str, Any]:
     checked_at = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
-    tasks = TASKS if tasks is None else tasks
+    tasks = (TASKS or load_tasks()) if tasks is None else tasks
     entries = [assess_task(name, project, enabled, hours, provider(name), load_heartbeat(heartbeat_path(name, project)), checked_at) for name, project, enabled, hours in tasks]
     statuses = {entry["status"] for entry in entries}
     if "FAILED" in statuses or "PARTIAL" in statuses:
