@@ -13,11 +13,11 @@ from urllib.parse import parse_qsl, urlsplit, urlunsplit
 REDACTED = "[REDACTED]"
 REDACTION_FAILED = "[REDACTION_FAILED]"
 MIN_SECRET_LENGTH = 8
-SENSITIVE_KEY = re.compile(r"(?i)(?:api[_-]?key|token|password|secret|authorization|auth|credential|access[_-]?key|private[_-]?key|client[_-]?secret|x-cg-demo-api-key)")
-SENSITIVE_NAME_FRAGMENT = r"(?:api[_-]?key|token|password|secret|authorization|auth|credential|access[_-]?key|private[_-]?key|client[_-]?secret|x-cg-demo-api-key)"
+SENSITIVE_KEY = re.compile(r"(?i)(?:api[_-]?key|token|password|secret|authorization|auth|credential|access[_-]?key|private[_-]?key|client[_-]?secret)")
+SENSITIVE_NAME_FRAGMENT = r"(?:api[_-]?key|token|password|secret|authorization|auth|credential|access[_-]?key|private[_-]?key|client[_-]?secret)"
 ASSIGNMENT = re.compile(rf"(?P<key>[\"']?(?=[A-Za-z0-9_.-]*{SENSITIVE_NAME_FRAGMENT})[A-Za-z][A-Za-z0-9_.-]*[\"']?)\s*(?P<sep>=|:)\s*(?P<value>\"[^\"]*\"|'[^']*'|[^\s,;}}&]+)", re.IGNORECASE)
 BEARER = re.compile(r"(?i)\bBearer\s+[^\s,;]+")
-AUTH_HEADER = re.compile(r"(?im)^(?P<key>Authorization|Proxy-Authorization|x-cg-demo-api-key)\s*:\s*[^\r\n]+")
+AUTH_HEADER = re.compile(r"(?im)^(?P<key>Authorization|Proxy-Authorization)\s*:\s*[^\r\n]+")
 URL_CANDIDATE = re.compile(r"https?://[^\s'\"<>]+", re.IGNORECASE)
 
 

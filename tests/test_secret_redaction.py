@@ -119,3 +119,62 @@ def _write_fake_source(tmp_path: Path) -> Path:
     source = tmp_path / "source.log"
     source.write_text(f"token={FAKE_TOKEN}\n", encoding="utf-8")
     return source
+
+
+# Onda 3: o código não deve conhecer nomes de fornecedores específicos
+# (ex.: CoinGecko). Estes testes provam que um header vendor-specific como
+# x-cg-demo-api-key continua sendo redigido pela regra GENÉRICA de
+# "*api*key*", mesmo sem existir como literal em nenhum lugar do módulo.
+FAKE_VENDOR_KEY = "cg_demo_fake_1234567890"
+
+
+def test_no_vendor_specific_literal_in_module_source() -> None:
+    import inspect
+    source = inspect.getsource(redaction)
+    assert "coingecko" not in source.lower()
+    assert "x-cg-demo-api-key" not in source.lower()
+
+
+def test_vendor_style_header_key_value_pair_is_redacted_generically() -> None:
+    # Estilo "header: valor" (o mesmo padrão de qualquer header HTTP de auth).
+    sanitized = redaction.redact_text(f"x-cg-demo-api-key: {FAKE_VENDOR_KEY}")
+    assert FAKE_VENDOR_KEY not in sanitized
+    assert redaction.REDACTED in sanitized
+
+
+def test_vendor_style_header_case_insensitive_is_redacted() -> None:
+    sanitized = redaction.redact_text(f"X-CG-Demo-API-Key: {FAKE_VENDOR_KEY}")
+    assert FAKE_VENDOR_KEY not in sanitized
+
+
+def test_vendor_style_header_as_url_query_param_is_redacted() -> None:
+    url = f"https://api.coingecko.com/v3/ping?x-cg-demo-api-key={FAKE_VENDOR_KEY}"
+    sanitized = redaction.redact_text(url)
+    assert FAKE_VENDOR_KEY not in sanitized
+
+
+def test_vendor_style_header_in_mapping_is_redacted() -> None:
+    payload = {"x-cg-demo-api-key": FAKE_VENDOR_KEY, "count": 3}
+    sanitized = redaction.redact_mapping(payload)
+    assert sanitized["x-cg-demo-api-key"] == redaction.REDACTED
+    assert FAKE_VENDOR_KEY not in json.dumps(sanitized)
+
+
+def test_multiple_secrets_in_same_message_are_all_redacted() -> None:
+    text = f"api_key={FAKE_KEY} token={FAKE_TOKEN} password=another_fake_secret_val"
+    sanitized = redaction.redact_text(text)
+    assert FAKE_KEY not in sanitized
+    assert FAKE_TOKEN not in sanitized
+    assert "another_fake_secret_val" not in sanitized
+    assert sanitized.count(redaction.REDACTED) >= 3
+
+
+def test_empty_value_is_left_unmatched() -> None:
+    assert redaction.redact_text("api_key=") == "api_key="
+
+
+def test_short_value_under_sensitive_key_is_still_redacted_by_assignment_rule() -> None:
+    # ASSIGNMENT redige qualquer valor sob uma chave sensível, independente do
+    # comprimento — só collect_sensitive_values() (para valores CONHECIDOS via
+    # env/config) exige MIN_SECRET_LENGTH; a regra estrutural não.
+    assert redaction.redact_text("token=abc") == f"token={redaction.REDACTED}"
