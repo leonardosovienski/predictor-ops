@@ -161,6 +161,39 @@ def test_stale_lock_is_reclaimed_but_recent_lock_is_preserved(tmp_path: Path) ->
     code, _, heartbeat, _ = invoke(tmp_path, [sys.executable, "-c", "pass"])
     assert code == 0 and not lock.exists()
     assert read_heartbeat(heartbeat)["lock"]["reclaimed"] is True
+    assert read_heartbeat(heartbeat)["lock"]["reclaimed_reason"] == "age_exceeded"
+
+
+def test_lock_with_dead_owner_pid_is_reclaimed_immediately_even_when_young(tmp_path: Path) -> None:
+    # Regressão (auditoria hostil 2026-07-17): antes, um lock órfão por kill
+    # duro (queda de energia, OOM-killer, timeout do scheduler) ficava preso
+    # até o TETO DE IDADE inteiro (24h por padrão), mesmo com o PID dono
+    # comprovadamente morto — em agendamento diário isso podia pular 2 dias
+    # seguidos por um único evento de kill duro. Agora, PID morto reclama o
+    # lock na hora, independente da idade.
+    heartbeat = tmp_path / "heartbeat.json"
+    lock = heartbeat.with_suffix(".json.lock")
+    lock.write_text(json.dumps({"run_id": "r1", "pid": 999999999,  # PID quase certamente inexistente
+                                "created_at_utc": "2026-07-17T00:00:00Z"}), encoding="ascii")
+    # lock RECÉM criado (idade ~0s) — MUITO abaixo de qualquer stale_after
+    # razoável; só a checagem de PID vivo pode justificar o reclaim aqui.
+    code, _, heartbeat, _ = invoke(tmp_path, [sys.executable, "-c", "pass"])
+    assert code == 0 and not lock.exists()
+    record = read_heartbeat(heartbeat)
+    assert record["lock"]["reclaimed"] is True
+    assert record["lock"]["reclaimed_reason"] == "owner_pid_dead"
+
+
+def test_lock_with_live_owner_pid_is_not_reclaimed_even_if_unreadable_age_check_would_allow(tmp_path: Path) -> None:
+    # PID do próprio processo de teste — garantidamente vivo. O lock não pode
+    # ser reclamado mesmo que outro fator sugerisse idade favorável.
+    heartbeat = tmp_path / "heartbeat.json"
+    lock = heartbeat.with_suffix(".json.lock")
+    lock.write_text(json.dumps({"run_id": "r1", "pid": os.getpid(),
+                                "created_at_utc": "2026-07-17T00:00:00Z"}), encoding="ascii")
+    code, _, actual_heartbeat, _ = invoke(tmp_path, [sys.executable, "-c", "raise SystemExit(0)"])
+    assert code == 4  # SKIPPED — lock não foi reclamado
+    assert lock.exists()
 
 
 def test_timeout_uses_process_tree_termination(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -217,9 +217,61 @@ def _lock_is_stale(path: Path, maximum_age: float) -> bool:
         return False
 
 
+def _pid_alive(pid: int) -> bool:
+    """Best-effort liveness check for a lock-owning PID.
+
+    A read failure (permission denied, transient race) is treated as
+    "can't tell" and returns True — fail toward NOT reclaiming, never toward
+    silently stealing a live process's lock. Mirrors the Windows
+    OpenProcess/POSIX os.kill(pid, 0) pattern already used elsewhere in the
+    ecosystem (previsao-cripto's own lock)."""
+    if pid <= 0:
+        return True
+    if sys.platform == "win32":
+        import ctypes
+        handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not handle:
+            return False
+        ctypes.windll.kernel32.CloseHandle(handle)
+        return True
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except OSError:
+        return True
+
+
+def _lock_owner_pid_dead(path: Path) -> bool:
+    """True only when the lock content is readable, names a PID, and that PID
+    is confirmed dead. Anything else (unreadable, no pid field, alive) is
+    False — i.e. "not confirmed dead", which keeps the existing age-only
+    policy as the fallback rather than ever reclaiming more eagerly than
+    before on ambiguous input."""
+    try:
+        content = json.loads(path.read_text(encoding="ascii"))
+        pid = content.get("pid")
+    except (OSError, ValueError, AttributeError):
+        return False
+    if not isinstance(pid, int):
+        return False
+    return not _pid_alive(pid)
+
+
 def _acquire_run_lock(path: Path, run_id: str, stale_after: float) -> dict[str, Any]:
-    """Acquire a lock, reclaiming only locks older than the declared policy."""
+    """Acquire a lock, reclaiming locks older than the declared policy OR
+    whose recorded owner PID is confirmed dead (auditoria hostil 2026-07-17:
+    a lock orphaned by a hard kill — power loss, OOM-killer, a scheduler that
+    force-terminates past its own timeout — used to sit unreclaimed for the
+    entire `stale_after` window, up to 24h by default, even though the owning
+    process plainly no longer existed; on a daily schedule that could skip
+    two runs in a row for a single hard-kill event). PID liveness is an
+    ADDITIONAL fast path, never a replacement for the age check: if the lock
+    content can't be read or has no pid, the original age-only policy still
+    applies unchanged."""
     reclaimed_age: float | None = None
+    reclaimed_reason: str | None = None
     for _ in range(2):
         try:
             descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
@@ -228,20 +280,24 @@ def _acquire_run_lock(path: Path, run_id: str, stale_after: float) -> dict[str, 
                 age = max(0.0, time.time() - path.stat().st_mtime)
             except FileNotFoundError:
                 continue
-            if age < stale_after:
+            owner_dead = _lock_owner_pid_dead(path)
+            if age < stale_after and not owner_dead:
                 return {"acquired": False, "path": str(path.resolve()), "reclaimed": False, "age_seconds": round(age, 3)}
             try:
                 path.unlink()
             except FileNotFoundError:
                 pass
             reclaimed_age = age
+            reclaimed_reason = "owner_pid_dead" if owner_dead else "age_exceeded"
             continue
         try:
             os.write(descriptor, json.dumps({"run_id": run_id, "pid": os.getpid(), "created_at_utc": utc_now()}, sort_keys=True).encode("ascii"))
             os.fsync(descriptor)
         finally:
             os.close(descriptor)
-        return {"acquired": True, "path": str(path.resolve()), "reclaimed": reclaimed_age is not None, "reclaimed_age_seconds": round(reclaimed_age, 3) if reclaimed_age is not None else None}
+        return {"acquired": True, "path": str(path.resolve()), "reclaimed": reclaimed_age is not None,
+                "reclaimed_age_seconds": round(reclaimed_age, 3) if reclaimed_age is not None else None,
+                "reclaimed_reason": reclaimed_reason}
     return {"acquired": False, "path": str(path.resolve()), "reclaimed": False, "age_seconds": None}
 
 
