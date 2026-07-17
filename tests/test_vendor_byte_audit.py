@@ -138,3 +138,14 @@ def test_json_cli_output(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
     assert audit.main(["--workspace", str(tmp_path), "--canonical", str(core), "--json"]) == 0
     data = json.loads(capsys.readouterr().out)
     assert data["summary"]["statuses"] == {"IDENTICAL": 1}
+
+
+def test_nonexistent_workspace_fails_closed_instead_of_zero_consumers(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+    # Regressão (auditoria hostil 2026-07-17): --workspace apontando para um
+    # diretório inexistente (typo, drive não montado) devolvia exit_code=0
+    # com consumer_count=0 — "tudo verificado", mascarando o erro de
+    # configuração como sucesso para qualquer pipeline que só olhe o exit
+    # code.
+    missing = tmp_path / "does-not-exist"
+    assert audit.main(["--workspace", str(missing)]) == 2
+    assert "não é um diretório" in capsys.readouterr().err

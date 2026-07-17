@@ -21,7 +21,12 @@ import sys
 from pathlib import Path
 from typing import Any, Iterable
 
-from vendor_byte_audit import MANIFEST_NAME, aggregate, discover_consumers, payload_entries
+try:  # Bare-script form first (matches this repo's own test/script convention);
+    # falls back to the `tools.X` package form for external consumers (found
+    # by adversarial audit 2026-07-17: this file only had the bare form).
+    from vendor_byte_audit import MANIFEST_NAME, aggregate, discover_consumers, payload_entries
+except ModuleNotFoundError:
+    from tools.vendor_byte_audit import MANIFEST_NAME, aggregate, discover_consumers, payload_entries  # type: ignore[no-redef]
 
 
 EXIT_CODES = {
@@ -384,6 +389,11 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--script and --module are mutually exclusive")
     mode = "script" if args.script else "module" if args.module else "vendor"
     workspace = args.workspace.resolve()
+    if not workspace.is_dir():
+        # Auditoria hostil 2026-07-17: mesmo achado do vendor_byte_audit.py —
+        # workspace inexistente não pode virar "0 consumidores, exit 0".
+        print(f"erro: --workspace não é um diretório: {workspace}", file=sys.stderr)
+        return 2
     data = build_report(workspace, args.consumer, mode=mode, script=args.script, module=args.module, full=not args.light, timeout=args.timeout, strict=args.strict)
     if args.json:
         print(json.dumps(data, ensure_ascii=False, sort_keys=True, indent=2))

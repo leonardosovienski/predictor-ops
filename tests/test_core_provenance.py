@@ -152,3 +152,25 @@ def test_symlink_path_matches_when_supported(tmp_path: Path):
         pytest.skip("symlink creation is unavailable in this Windows environment")
     module = SimpleNamespace(__file__=str(linked_parent / "__init__.py"))
     assert provenance.inspect_core_provenance(expected, module, full=False)["status"] == "MATCH"
+
+
+def test_nonexistent_workspace_fails_closed_instead_of_zero_consumers(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+    # Mesmo achado do vendor_byte_audit.py: workspace inexistente não pode
+    # virar "0 consumidores, exit 0".
+    missing = tmp_path / "does-not-exist"
+    assert provenance.main(["--workspace", str(missing)]) == 2
+    assert "não é um diretório" in capsys.readouterr().err
+
+
+def test_importable_as_tools_package_from_outside_tools_dir() -> None:
+    # Regressão (auditoria hostil 2026-07-17): `from tools.core_provenance
+    # import ...` de fora quebrava com
+    # `ModuleNotFoundError: No module named 'vendor_byte_audit'`.
+    import subprocess
+    import sys
+    workspace = Path(__file__).resolve().parents[2]
+    probe = subprocess.run(
+        [sys.executable, "-c", "from tools.core_provenance import inspect_core_provenance"],
+        cwd=str(workspace), capture_output=True, text=True,
+    )
+    assert probe.returncode == 0, probe.stderr

@@ -370,6 +370,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="emit deterministic JSON to stdout")
     args = parser.parse_args(argv)
     workspace = args.workspace.resolve()
+    if not workspace.is_dir():
+        # Auditoria hostil 2026-07-17: sem esta checagem, discover_consumers()
+        # devolvia [] silenciosamente para um workspace inexistente/typo, e o
+        # relatório saía com consumer_count=0 e exit_code=0 — "tudo
+        # verificado", quando na verdade a auditoria nem chegou a rodar. Um
+        # pipeline de CI/monitoramento que só olha o exit code veria sucesso.
+        print(f"erro: --workspace não é um diretório: {workspace}", file=sys.stderr)
+        return 2
     canonical = (args.canonical or workspace / "predictor_core").resolve()
     data = report(workspace, canonical, args.consumer)
     if args.json:
