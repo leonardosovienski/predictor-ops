@@ -78,6 +78,44 @@ def test_write_touches_only_the_manifest_file(tmp_path: Path) -> None:
     assert (root / provenance.MANIFEST_NAME).is_file()
 
 
+def test_write_refuses_when_new_untracked_payload_file_is_present(tmp_path: Path) -> None:
+    # Regressão (auditoria hostil 2026-07-17, também vivida de verdade na
+    # Onda 3A desta reintegração): --write ANTES de `git add` de um arquivo
+    # novo calculava o manifesto sobre o ÍNDICE do Git (não o working tree) e
+    # OMITIA o arquivo novo em silêncio, exit 0. Agora recusa com exit 2 e
+    # não escreve nada, em vez de gerar um manifesto incompleto sem avisar.
+    root = _release_repo(tmp_path)
+    (root / "novo_nao_rastreado.py").write_text("X = 1\n", encoding="utf-8")
+    before_exists = (root / provenance.MANIFEST_NAME).exists()
+    assert generator.cmd_write(root) == 2
+    assert (root / provenance.MANIFEST_NAME).exists() == before_exists  # nada escrito
+
+
+def test_write_refuses_when_tracked_file_modified_but_not_staged(tmp_path: Path) -> None:
+    root = _release_repo(tmp_path)
+    (root / "payload.py").write_text("VALUE = 999  # editado sem git add\n", encoding="utf-8")
+    assert generator.cmd_write(root) == 2
+
+
+def test_write_succeeds_after_git_add_of_pending_files(tmp_path: Path) -> None:
+    root = _release_repo(tmp_path)
+    (root / "novo_nao_rastreado.py").write_text("X = 1\n", encoding="utf-8")
+    assert generator.cmd_write(root) == 2  # ainda recusa
+    _git(root, "add", "novo_nao_rastreado.py")
+    assert generator.cmd_write(root) == 0  # agora aceita, arquivo no manifesto
+    manifest = json.loads((root / provenance.MANIFEST_NAME).read_text(encoding="utf-8"))
+    assert "novo_nao_rastreado.py" in manifest["included_files"]
+
+
+def test_write_does_not_block_on_rewriting_the_manifest_itself(tmp_path: Path) -> None:
+    # A árvore ficar "suja" só por causa do TOOLS_MANIFEST.json recém-escrito
+    # (ainda não commitado) é o fluxo normal write→inspecionar→commit — não
+    # pode bloquear uma segunda escrita.
+    root = _release_repo(tmp_path)
+    assert generator.cmd_write(root) == 0
+    assert generator.cmd_write(root) == 0  # segunda escrita, manifesto ainda não commitado
+
+
 # ---------------------------------------------------------------------------
 # 4. após --write, --check passa
 # ---------------------------------------------------------------------------
@@ -288,3 +326,19 @@ def test_cli_check_and_write_via_main(tmp_path: Path, capsys) -> None:
     assert generator.main(["--check", "--root", str(root)]) == 0
     out = capsys.readouterr().out
     assert "OK" in out
+
+
+def test_importable_as_tools_package_from_outside_tools_dir() -> None:
+    # Regressão (auditoria hostil 2026-07-17): `from tools.release_manifest
+    # import ...` de um consumidor externo levantava
+    # `ModuleNotFoundError: No module named 'tools_provenance'`, porque o
+    # módulo só tinha a forma de import "bare" (script standalone), sem o
+    # fallback try/except que operational_runner.py já tem.
+    import subprocess
+    import sys
+    workspace = Path(__file__).resolve().parents[2]
+    probe = subprocess.run(
+        [sys.executable, "-c", "from tools.release_manifest import build_manifest"],
+        cwd=str(workspace), capture_output=True, text=True,
+    )
+    assert probe.returncode == 0, probe.stderr

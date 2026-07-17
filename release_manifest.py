@@ -23,10 +23,20 @@ import sys
 import tempfile
 from pathlib import Path
 
-from tools_provenance import (HASH_ALGORITHM, HASH_EXCLUDED, MANIFEST_NAME,
-                              SCHEMA_VERSION, ToolsProvenanceError,
-                              _tracked_files, content_hash,
-                              default_tools_root, utc_now)
+try:  # Bare-script form first (matches this repo's own test/script convention
+    # of putting tools/ itself on sys.path); falls back to the `tools.X`
+    # package form for external consumers who only have the workspace root on
+    # sys.path (found by adversarial audit 2026-07-17: this file used to only
+    # have the bare form, breaking `from tools.release_manifest import ...`).
+    from tools_provenance import (HASH_ALGORITHM, HASH_EXCLUDED, MANIFEST_NAME,
+                                  SCHEMA_VERSION, ToolsProvenanceError,
+                                  _git, _tracked_files, content_hash,
+                                  default_tools_root, utc_now)
+except ModuleNotFoundError:
+    from tools.tools_provenance import (HASH_ALGORITHM, HASH_EXCLUDED, MANIFEST_NAME,  # type: ignore[no-redef]
+                                        SCHEMA_VERSION, ToolsProvenanceError,
+                                        _git, _tracked_files, content_hash,
+                                        default_tools_root, utc_now)
 
 # Keys that must be identical between the expected and the persisted manifest.
 # generated_at_utc is deliberately excluded: it is metadata about WHEN the
@@ -103,6 +113,40 @@ def cmd_write(root: Path | None = None) -> int:
     """Regenerate TOOLS_MANIFEST.json atomically. Touches no other file."""
     root = (root or default_tools_root()).resolve()
     manifest_path = root / MANIFEST_NAME
+    try:
+        # `git status --porcelain` reporta cada entrada como "XY caminho":
+        # X = status no índice (staged), Y = status no working tree (não
+        # staged). content_hash/_tracked_files leem do ÍNDICE (git show
+        # :path) — um arquivo já staged (git add feito, "A " ou "M ") é
+        # SEGURO, o índice já reflete o conteúdo pretendido. O problema real
+        # é Y != ' ' (mudança no working tree que ainda NÃO foi staged) ou
+        # "??" (novo, nem rastreado) — esses SIM ficam invisíveis para o
+        # manifesto. O próprio TOOLS_MANIFEST.json é sempre excluído:
+        # regravá-lo é exatamente o que --write faz, e ele ficar staged-mas-
+        # não-commitado até o commit seguinte é o fluxo normal
+        # (write → inspecionar → commit), não a ordem insegura que esta
+        # checagem existe para pegar.
+        status_lines = [ln for ln in _git(root, "status", "--porcelain").splitlines()
+                        if ln.strip() and not ln[3:].strip().endswith(MANIFEST_NAME)
+                        and (ln[:2] == "??" or ln[1] != " ")]
+    except ToolsProvenanceError:
+        status_lines = None  # não é um repo git (ou git indisponível): não é possível checar
+    if status_lines:
+        # Auditoria hostil 2026-07-17: rodar --write ANTES de `git add` de
+        # arquivos novos/alterados fazia o manifesto ser calculado sobre o
+        # ÍNDICE do Git (via content_hash/_tracked_files), não o working
+        # tree — um arquivo novo era omitido em silêncio, exit 0, sem aviso
+        # (incidente real desta mesma sessão, Onda 3A). Recusar de cara aqui
+        # é estritamente melhor: sem isso, o erro só apareceria depois, no
+        # --check ou no collect_tools_provenance(strict=True) de alguém
+        # esperando MATCH.
+        print("erro: há arquivos modificados/novos ainda NÃO staged (git add) "
+              f"em {root} — content_hash é calculado sobre o ÍNDICE do Git, "
+              "não o working tree, então --write ignoraria essas mudanças em "
+              "silêncio. Rode `git add` nos arquivos pretendidos antes de "
+              "--write (não precisa commitar ainda). Arquivos: "
+              + "; ".join(ln.strip() for ln in status_lines))
+        return 2
     try:
         payload = build_manifest(root)
     except ToolsProvenanceError as exc:
