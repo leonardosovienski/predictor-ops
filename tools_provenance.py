@@ -50,8 +50,14 @@ def _git_bytes(root: Path, *args: str) -> bytes:
 
 
 def _tracked_files(root: Path) -> list[str]:
-    files = [line for line in _git(root, "ls-files").splitlines()
-             if line and line not in HASH_EXCLUDED]
+    # -z: NUL-delimited output AND disables filename quoting — plain
+    # `git ls-files` octal-escapes any non-ASCII path (e.g. "\303\261" for
+    # "ñ"), which silently broke content_hash/build_manifest for any
+    # tracked file with a non-ASCII name (the escaped string never resolves
+    # to a real path via root / relative).
+    raw = _git_bytes(root, "ls-files", "-z")
+    files = [piece.decode("utf-8") for piece in raw.split(b"\0") if piece]
+    files = [f for f in files if f not in HASH_EXCLUDED]
     if not files:
         raise ToolsProvenanceError("tools content set is empty")
     return sorted(files)

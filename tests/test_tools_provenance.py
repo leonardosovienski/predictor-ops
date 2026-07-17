@@ -90,3 +90,20 @@ def test_manifest_hash_divergence_and_invalid_schema_fail(tmp_path: Path) -> Non
     _git(root, "commit", "-m", "bad schema")
     with pytest.raises(provenance.ToolsProvenanceError, match="schema"):
         provenance.collect_tools_provenance(root, strict=False)
+
+
+def test_tracked_files_handles_unicode_filenames(tmp_path: Path) -> None:
+    # Regressão: plain `git ls-files` octal-escapes non-ASCII names (e.g.
+    # "\303\261" for "ñ"); the escaped string never resolves as a real path,
+    # so content_hash/_tracked_files silently broke for any tracked file
+    # with a non-ASCII name. `git ls-files -z` disables that quoting.
+    root = release_repo(tmp_path)
+    unicode_name = "unicode_ñ_文件.py"
+    (root / unicode_name).write_text("VALUE = 3\n", encoding="utf-8")
+    _git(root, "add", unicode_name)
+    _git(root, "commit", "-m", "add unicode file")
+    files = provenance._tracked_files(root)
+    assert unicode_name in files
+    # content_hash must not raise "tracked content file is missing"
+    digest = provenance.content_hash(root, files)
+    assert len(digest) == 64
