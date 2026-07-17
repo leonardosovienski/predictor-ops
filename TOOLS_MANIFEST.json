@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "tools_version": "1.2.3",
-  "content_hash": "1a350d55bc25b2c9af102a246b3c33b59553fdb037bab58654179fc6522210c3",
+  "tools_version": "1.3.0",
+  "content_hash": "9f18bce7cf68b9ab3e748dfa09766146a9be91d37334128bb54e3b51676014b0",
   "hash_algorithm": "sha256-path-nul-content-nul-v1",
   "included_files": [
     ".github/workflows/tools-tests.yml",
@@ -34,5 +34,5 @@
     "VERSION"
   ],
   "release_commit": null,
-  "generated_at_utc": "2026-07-17T15:33:43Z"
+  "generated_at_utc": "2026-07-17T16:13:54Z"
 }

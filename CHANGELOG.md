@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.3.0 — 2026-07-17
+
+Adds `release_manifest.py`, a canonical generator/validator for
+`TOOLS_MANIFEST.json` (`--check` / `--write`), reusing
+`tools_provenance.content_hash`/`_tracked_files` as the single source of the
+fingerprint algorithm rather than duplicating it. Removes the
+provider-specific `x-cg-demo-api-key` literal from `secret_redaction.py`'s
+sensitive-key patterns; coverage is unaffected (the generic `api[_-]?key`
+fragment already matches it). Discovered during ecosystem reintegration:
+`TOOLS_MANIFEST.json` had no documented way to regenerate itself after a
+legitimate content change, which left strict provenance permanently unable
+to MATCH following any normal edit.
+
 ## 1.2.3 — 2026-07-16
 
 Raises the validated CI coverage gate to 80% after adding health and redaction
