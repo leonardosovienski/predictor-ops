@@ -75,7 +75,21 @@ def redact_text(value: str | bytes | object, sensitive_values: Iterable[str] = (
 
 def redact_mapping(value: Any, sensitive_values: Iterable[str] = ()) -> Any:
     if isinstance(value, Mapping):
-        return {str(key): REDACTED if SENSITIVE_KEY.search(str(key)) else redact_mapping(item, sensitive_values) for key, item in value.items()}
+        out: dict[str, Any] = {}
+        for key, item in value.items():
+            key_text = str(key)
+            if SENSITIVE_KEY.search(key_text):
+                out[key_text] = REDACTED
+            else:
+                # Auditoria hostil 2026-07-17: a checagem anterior só olhava
+                # o NOME da chave (ex.: "api_key") — se o próprio VALOR de um
+                # segredo conhecido fosse usado como chave de dict (padrão
+                # comum: indexar por token/session-id), ele vazava verbatim
+                # na chave mesmo estando em sensitive_values. redact_text já
+                # substitui qualquer sensitive_value conhecido por
+                # substring; aplicamos isso também à chave.
+                out[redact_text(key_text, sensitive_values)] = redact_mapping(item, sensitive_values)
+        return out
     if isinstance(value, list):
         return [redact_mapping(item, sensitive_values) for item in value]
     if isinstance(value, tuple):

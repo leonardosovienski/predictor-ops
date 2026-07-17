@@ -178,3 +178,20 @@ def test_short_value_under_sensitive_key_is_still_redacted_by_assignment_rule() 
     # comprimento — só collect_sensitive_values() (para valores CONHECIDOS via
     # env/config) exige MIN_SECRET_LENGTH; a regra estrutural não.
     assert redaction.redact_text("token=abc") == f"token={redaction.REDACTED}"
+
+
+def test_redact_mapping_redacts_known_secret_used_as_dict_key() -> None:
+    # Regressão (auditoria hostil 2026-07-17): redact_mapping só checava o
+    # NOME da chave (ex.: "api_key"). Se o próprio VALOR de um segredo
+    # conhecido fosse usado como chave (padrão comum: indexar por
+    # token/session-id), ele vazava verbatim, mesmo estando em
+    # sensitive_values. O valor da chave aqui é deliberadamente opaco (não
+    # contém "token"/"secret"/"key"/etc.) para exercitar o caminho NOVO, não
+    # a checagem de nome já existente.
+    session_id = "9f8e7d6c5b4a3210deadbeefcafebabe12345678"
+    payload = {session_id: "some value", "other": "fine"}
+    sanitized = redaction.redact_mapping(payload, [session_id])
+    assert session_id not in sanitized
+    assert redaction.REDACTED in sanitized
+    assert sanitized[redaction.REDACTED] == "some value"
+    assert sanitized["other"] == "fine"
