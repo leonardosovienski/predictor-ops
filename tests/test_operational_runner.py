@@ -96,6 +96,22 @@ def test_atomic_heartbeat_leaves_no_temporary_file(tmp_path: Path) -> None:
     assert not list(tmp_path.glob(".heartbeat.json.*.tmp"))
 
 
+def test_atomic_write_json_leaves_no_orphan_temp_file_on_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Regressão: uma falha entre a criação do tempfile e o os.replace (disco
+    # cheio, processo morto no meio) deixava um .{name}.{uuid}.tmp órfão —
+    # inconsistente com o cleanup já usado em tools/release_manifest.py.
+    path = tmp_path / "heartbeat.json"
+
+    def _boom(*_args, **_kwargs):
+        raise OSError("simulated disk failure")
+
+    monkeypatch.setattr(runner.os, "fsync", _boom)
+    with pytest.raises(OSError):
+        runner.atomic_write_json(path, {"status": "STARTED"})
+    assert not path.exists()  # real file never touched (os.replace never ran)
+    assert not list(tmp_path.glob(".heartbeat.json.*.tmp"))  # no orphan left
+
+
 def test_secrets_are_redacted_from_record(tmp_path: Path) -> None:
     _, _, heartbeat, _ = invoke(tmp_path, [sys.executable, "-c", "raise SystemExit(2)", "token=visible"])
     assert "visible" not in heartbeat.read_text(encoding="utf-8")

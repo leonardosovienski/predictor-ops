@@ -54,11 +54,20 @@ def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n"
-    with temporary.open("w", encoding="utf-8", newline="\n") as handle:
-        handle.write(encoded)
-        handle.flush()
-        os.fsync(handle.fileno())
-    os.replace(temporary, path)
+    try:
+        with temporary.open("w", encoding="utf-8", newline="\n") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        # Never leave an orphaned temp file behind on failure (disk full,
+        # process killed mid-write, etc.) — matches the cleanup pattern in
+        # tools/release_manifest.py. The real heartbeat/JSONL file at `path`
+        # is untouched until os.replace succeeds.
+        if temporary.exists():
+            temporary.unlink()
+        raise
 
 
 def write_heartbeat(path: Path, payload: dict[str, Any]) -> None:
