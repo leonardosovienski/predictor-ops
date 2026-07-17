@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "tools_version": "1.2.3",
-  "content_hash": "05b4d2988f1eb36378a627072fc75acb4784e073dea9859f300550692aa44cba",
+  "content_hash": "1a350d55bc25b2c9af102a246b3c33b59553fdb037bab58654179fc6522210c3",
   "hash_algorithm": "sha256-path-nul-content-nul-v1",
   "included_files": [
     ".github/workflows/tools-tests.yml",
@@ -13,6 +13,7 @@
     "ecosystem_health.py",
     "operational_runner.py",
     "release_check.py",
+    "release_manifest.py",
     "secret_redaction.py",
     "tests/conftest.py",
     "tests/test_brasileirao_operational_entrypoint.py",
@@ -21,6 +22,7 @@
     "tests/test_ecosystem_health.py",
     "tests/test_lol_operational_entrypoint.py",
     "tests/test_operational_runner.py",
+    "tests/test_release_manifest.py",
     "tests/test_secret_redaction.py",
     "tests/test_tools_provenance.py",
     "tests/test_vendor_byte_audit.py",
@@ -31,6 +33,6 @@
     "TOOLS_MANIFEST.json",
     "VERSION"
   ],
-  "generated_at_utc": "2026-07-16T19:30:00Z",
-  "release_commit": null
+  "release_commit": null,
+  "generated_at_utc": "2026-07-17T15:33:43Z"
 }
