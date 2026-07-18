@@ -39,3 +39,34 @@ See [PROVENANCE.md](PROVENANCE.md) for the artifact contract and release
 fingerprint algorithm. `TOOLS_MANIFEST.json` describes the current release;
 it is intentionally excluded from its own content hash, along with `VERSION`,
 to avoid a circular release fingerprint.
+
+## Public API
+
+Consumers must import via the package form — `from tools import X` or
+`python -m tools.X` — not the bare/flat form (`import X`) that `tools/`'s own
+test suite uses internally. The two forms create independent module objects
+in the same process (see `tests/test_import_split_brain.py`); package form is
+the one every real consumer actually uses today, and the one this contract
+covers.
+
+Supported (stable within 1.x — may gain optional parameters, won't change
+existing behavior without a MAJOR bump):
+
+| Symbol | Module | Notes |
+|---|---|---|
+| `write_heartbeat`, `run`, `main` | `operational_runner` | CLI entrypoint (`run --task ... -- <command>`) and its heartbeat helper |
+| `collect_sensitive_values`, `safe_redact_text`, `safe_redact_mapping` | `secret_redaction` | The redaction entrypoints; never raise — degrade to `REDACTION_FAILED` |
+| `collect_tools_provenance`, `ToolsProvenanceError` | `tools_provenance` | Runtime self-identity check for a `tools/` checkout |
+
+Everything else that's importable without a leading underscore
+(`content_hash`, `redact_mapping`, `build_manifest`, `inspect_core_provenance`,
+`audit_consumer`, `payload_entries`, `load_tasks`, and similar) is
+**INTERNAL in practice**: no external consumer imports it today (confirmed by
+grep across all 5 live consumers, 2026-07-17 audit), it has no compatibility
+guarantee, and it may change shape without a version bump. It is not
+underscore-prefixed only because these modules predate a formal public/
+internal split; treat the absence of `_` as an implementation detail, not an
+invitation. The CLIs (`core_provenance.py`, `vendor_byte_audit.py`,
+`release_manifest.py`, `ecosystem_health.py`, `release_check.py`) are
+supported as command-line tools (their `--flags` are the contract); their
+Python-level functions are not.
