@@ -195,3 +195,32 @@ def test_redact_mapping_redacts_known_secret_used_as_dict_key() -> None:
     assert redaction.REDACTED in sanitized
     assert sanitized[redaction.REDACTED] == "some value"
     assert sanitized["other"] == "fine"
+
+
+def test_assignment_regex_nao_tem_backtracking_catastrofico_em_texto_homogeneo() -> None:
+    # Regressão (auditoria hostil 2026-07-17, rodada "tools/"): ASSIGNMENT
+    # combinava um lookahead ilimitado ((?=[A-Za-z0-9_.-]*FRAG)) com um
+    # quantificador ilimitado no grupo "key" — em texto longo e homogêneo
+    # SEM o fragmento sensível em nenhum ponto (plausível em base64/hex/logs
+    # minificados), isso causava backtracking catastrófico (ReDoS): medido
+    # em ~3s para 10KB e ~15.7s para 20KB antes da correção. Isso também
+    # derrotava o --timeout do operational_runner, já que a thread de
+    # drenagem/redação não tinha timeout próprio. Bound de MAX_KEY_LEN torna
+    # o pior caso linear no tamanho do texto.
+    import time
+    text = "a.b-c_d" * (20 * 1024 // 7)  # 20KB, nenhum fragmento sensível presente
+    start = time.monotonic()
+    list(redaction.ASSIGNMENT.finditer(text))
+    elapsed = time.monotonic() - start
+    assert elapsed < 2.0, f"ASSIGNMENT.finditer levou {elapsed:.2f}s em 20KB — regressão de ReDoS"
+
+
+def test_assignment_regex_ainda_detecta_chave_longa_legitima() -> None:
+    # O bound de comprimento não pode quebrar nomes de chave reais, só o
+    # ataque de texto homogêneo sem fragmento sensível.
+    long_key = "my_really_quite_long_but_still_realistic_api_key_field_name"
+    assert len(long_key) < 128
+    text = f"{long_key}=abcdef0123456789"
+    sanitized = redaction.redact_text(text)
+    assert "abcdef0123456789" not in sanitized
+    assert redaction.REDACTED in sanitized

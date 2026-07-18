@@ -15,7 +15,16 @@ REDACTION_FAILED = "[REDACTION_FAILED]"
 MIN_SECRET_LENGTH = 8
 SENSITIVE_KEY = re.compile(r"(?i)(?:api[_-]?key|token|password|secret|authorization|auth|credential|access[_-]?key|private[_-]?key|client[_-]?secret)")
 SENSITIVE_NAME_FRAGMENT = r"(?:api[_-]?key|token|password|secret|authorization|auth|credential|access[_-]?key|private[_-]?key|client[_-]?secret)"
-ASSIGNMENT = re.compile(rf"(?P<key>[\"']?(?=[A-Za-z0-9_.-]*{SENSITIVE_NAME_FRAGMENT})[A-Za-z][A-Za-z0-9_.-]*[\"']?)\s*(?P<sep>=|:)\s*(?P<value>\"[^\"]*\"|'[^']*'|[^\s,;}}&]+)", re.IGNORECASE)
+# Auditoria hostil 2026-07-17 (rodada "tools/"): a versão original tinha o lookahead
+# `(?=[A-Za-z0-9_.-]*FRAG)` e o quantificador de "key" ambos ILIMITADOS — em texto
+# homogêneo longo (base64/hex/logs minificados sem o fragmento sensível em lugar
+# nenhum) isso causa backtracking catastrófico (ReDoS): 10KB levou ~3s, 20KB ~15.7s,
+# e por rodar dentro de _drain_redacted_output SEM timeout próprio, derrota até o
+# --timeout do operational_runner. Nomes de chave reais nunca passam de ~128
+# caracteres — limitar os quantificadores a um teto generoso torna o pior caso
+# O(tamanho_do_texto) em vez de superlinear, sem mudar nenhum resultado real.
+_MAX_KEY_LEN = 128
+ASSIGNMENT = re.compile(rf"(?P<key>[\"']?(?=[A-Za-z0-9_.-]{{0,{_MAX_KEY_LEN}}}{SENSITIVE_NAME_FRAGMENT})[A-Za-z][A-Za-z0-9_.-]{{0,{_MAX_KEY_LEN - 1}}}[\"']?)\s*(?P<sep>=|:)\s*(?P<value>\"[^\"]*\"|'[^']*'|[^\s,;}}&]+)", re.IGNORECASE)
 BEARER = re.compile(r"(?i)\bBearer\s+[^\s,;]+")
 AUTH_HEADER = re.compile(r"(?im)^(?P<key>Authorization|Proxy-Authorization)\s*:\s*[^\r\n]+")
 URL_CANDIDATE = re.compile(r"https?://[^\s'\"<>]+", re.IGNORECASE)
