@@ -50,6 +50,30 @@ def redact(value: str) -> str:
     return safe_redact_text(value, collect_sensitive_values(os.environ))
 
 
+def _replace_with_retry(temporary: Path, path: Path, attempts: int = 6, initial_delay: float = 0.01) -> None:
+    """os.replace, retrying on transient Windows sharing-violation errors.
+
+    Auditoria hostil 2026-07-17 (rodada "tools/"): dois processos perdendo a
+    corrida do lock ainda escrevem heartbeat concorrentemente (comportamento
+    pré-existente, não alterado aqui) — no Windows, os.replace pode lançar
+    PermissionError (WinError 5) quando o destino está momentaneamente aberto
+    por OUTRO os.replace concorrente (MoveFileEx com MOVEFILE_REPLACE_EXISTING
+    falha nesse caso; diferente do POSIX rename(2), que não tem essa janela).
+    A colisão é transitória — um retry curto resolve sem mudar a semântica de
+    "quem escreveu por último vence".
+    """
+    delay = initial_delay
+    for attempt in range(attempts):
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(delay)
+            delay *= 2
+
+
 def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
@@ -59,7 +83,7 @@ def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
             handle.write(encoded)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        _replace_with_retry(temporary, path)
     except BaseException:
         # Never leave an orphaned temp file behind on failure (disk full,
         # process killed mid-write, etc.) — matches the cleanup pattern in

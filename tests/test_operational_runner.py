@@ -227,3 +227,43 @@ def test_jsonl_append_is_parseable_under_threaded_writers(tmp_path: Path) -> Non
     for thread in threads:
         thread.join()
     assert sorted(json.loads(line)["number"] for line in events.read_text(encoding="utf-8").splitlines()) == list(range(40))
+
+
+def test_atomic_write_retries_transient_windows_permission_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Regressão (auditoria hostil 2026-07-17, rodada "tools/"): dois processos
+    # perdedores da corrida de lock ainda escrevem heartbeat concorrentemente
+    # sem lock nenhum (comportamento pré-existente, não alterado aqui). No
+    # Windows, os.replace pode lançar PermissionError (WinError 5) quando o
+    # destino está momentaneamente aberto por OUTRO os.replace concorrente —
+    # reproduzido em ~1 de cada 3 execuções com 5 threads concorrentes. Isso
+    # subia sem tratamento e derrubava a thread/processo chamador em vez de
+    # terminar como SKIPPED observável. _replace_with_retry precisa absorver
+    # essa colisão transitória.
+    target = tmp_path / "heartbeat.json"
+    calls = {"n": 0}
+    real_replace = os.replace
+
+    def flaky_replace(src, dst):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise PermissionError(5, "Access is denied")
+        return real_replace(src, dst)
+
+    monkeypatch.setattr(runner.os, "replace", flaky_replace)
+    runner.atomic_write_json(target, {"status": "ok"})
+    assert calls["n"] == 2
+    assert json.loads(target.read_text(encoding="utf-8"))["status"] == "ok"
+
+
+def test_atomic_write_gives_up_after_persistent_permission_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    target = tmp_path / "heartbeat.json"
+
+    def always_denied(src, dst):
+        raise PermissionError(5, "Access is denied")
+
+    monkeypatch.setattr(runner.os, "replace", always_denied)
+    monkeypatch.setattr(runner.time, "sleep", lambda _seconds: None)
+    with pytest.raises(PermissionError):
+        runner.atomic_write_json(target, {"status": "ok"})
+    # nenhum arquivo temporário órfão, mesmo depois de esgotar as tentativas
+    assert list(tmp_path.glob(".heartbeat.json.*.tmp")) == []
