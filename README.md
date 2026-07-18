@@ -38,7 +38,9 @@ workspace; they are explicitly skipped in an isolated clone.
 See [PROVENANCE.md](PROVENANCE.md) for the artifact contract and release
 fingerprint algorithm. `TOOLS_MANIFEST.json` describes the current release;
 it is intentionally excluded from its own content hash, along with `VERSION`,
-to avoid a circular release fingerprint.
+to avoid a circular release fingerprint. See [HANDOFF.md](HANDOFF.md) for
+operational continuity (current test count, recent hardening, pending
+items).
 
 ## Public API
 
