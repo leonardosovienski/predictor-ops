@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import tomllib
 
 import pytest
 
@@ -342,3 +343,12 @@ def test_importable_as_tools_package_from_outside_tools_dir() -> None:
         cwd=str(workspace), capture_output=True, text=True,
     )
     assert probe.returncode == 0, probe.stderr
+
+
+def test_project_metadata_version_matches_version_file() -> None:
+    """Um bump de release deve atualizar as duas fontes declarativas."""
+    root = Path(__file__).resolve().parents[1]
+    metadata = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    declared = metadata["project"]["version"]
+    canonical = (root / "VERSION").read_text(encoding="utf-8").strip()
+    assert declared == canonical

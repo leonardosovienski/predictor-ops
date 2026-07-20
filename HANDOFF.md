@@ -1,7 +1,6 @@
 # HANDOFF — tools/
 
-Verificado em: 2026-07-19. Commit-base: `9f9f07e` + rodada OP-1 (branch
-`claude/tools-maintenance-evolution-927d8a`).
+Verificado em: 2026-07-20. Commit-base anterior: `80eca1a` (`main`).
 
 ## 1. Identidade
 
@@ -19,19 +18,18 @@ a lista de não-objetivos completa.
 ## 3. Estado atual
 
 8 módulos, 100% stdlib (`pyproject.toml` declara `dependencies = []`),
-**138 testes passed, 1 skipped** (verificado 2026-07-19).
+**139 testes passed, 1 skipped** (verificado 2026-07-20).
 `TOOLS_MANIFEST.json` em sincronia (`--check` retorna OK). API pública
 documentada em `README.md`. Nenhum bug de código conhecido em aberto.
 
 ## 4. Branch, versão e commit-base
 
-Rodada atual em branch `claude/tools-maintenance-evolution-927d8a` (worktree),
-a mesclar em `main`. `VERSION` = `1.3.1`.
+Branch atual `main`. `VERSION` e `pyproject.toml` = `1.3.1`.
 
 ## 5. Estado Git
 
-Working tree limpo. Nenhum remoto configurado — nada foi ou pode ser
-publicado por push. Nenhuma tag criada nesta linha do tempo.
+Antes desta manutenção, working tree limpo. Remoto `origin` configurado para
+`tools-predictor`; nenhum push ou tag foi feito nesta manutenção.
 
 ## 6. Arquitetura
 
@@ -105,7 +103,7 @@ para verificação detalhada de cada uma:
 cd <workspace-raiz>
 python -m pytest tools/ -q
 ```
-Resultado esperado: `138 passed, 1 skipped`. Ver `RUNBOOK_TESTS.md` para
+Resultado esperado: `139 passed, 1 skipped`. Ver `RUNBOOK_TESTS.md` para
 comandos completos de todos os repos e `RUNBOOK_RELEASE.md` para o release
 preflight.
 

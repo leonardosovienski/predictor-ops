@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Reconcile the PEP 621 project version with `VERSION` at 1.3.1 and add a
+  regression test that requires both declarations to match.
+
 ## 1.3.1 — 2026-07-19
 
 Closes OP-1 (`PENDENCIAS_ABERTAS.md`): a runner instance that loses the lock
