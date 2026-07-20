@@ -1,6 +1,7 @@
 # HANDOFF — tools/
 
-Verificado em: 2026-07-18. Commit-base: `2732713` (branch `main`).
+Verificado em: 2026-07-19. Commit-base: `9f9f07e` + rodada OP-1 (branch
+`claude/tools-maintenance-evolution-927d8a`).
 
 ## 1. Identidade
 
@@ -18,14 +19,14 @@ a lista de não-objetivos completa.
 ## 3. Estado atual
 
 8 módulos, 100% stdlib (`pyproject.toml` declara `dependencies = []`),
-**137 testes passed, 1 skipped** (verificado 2026-07-18, cache limpo).
+**138 testes passed, 1 skipped** (verificado 2026-07-19).
 `TOOLS_MANIFEST.json` em sincronia (`--check` retorna OK). API pública
 documentada em `README.md`. Nenhum bug de código conhecido em aberto.
 
 ## 4. Branch, versão e commit-base
 
-Branch única `main` (nunca houve branch paralela nesta camada).
-`VERSION` = `1.3.0`. Commit-base desta verificação: `2732713`.
+Rodada atual em branch `claude/tools-maintenance-evolution-927d8a` (worktree),
+a mesclar em `main`. `VERSION` = `1.3.1`.
 
 ## 5. Estado Git
 
@@ -85,6 +86,10 @@ renomeado — ver README).
 
 Ver `FINAL_FORENSIC_REVIEW.md` (revisão independente, commit `cca60f0`)
 para verificação detalhada de cada uma:
+- OP-1 fechado (1.3.1, 2026-07-19): perdedor do lock não escreve mais no
+  heartbeat compartilhado — `SKIPPED` vai para o sidecar
+  `skipped_heartbeat_path()` + event log; heartbeat principal é exclusivo do
+  dono do lock.
 - ReDoS em `secret_redaction.ASSIGNMENT` (backtracking catastrófico) —
   commit `9082c4e`.
 - Race de heartbeat concorrente no Windows (`os.replace` retry) — commit
@@ -100,7 +105,7 @@ para verificação detalhada de cada uma:
 cd <workspace-raiz>
 python -m pytest tools/ -q
 ```
-Resultado esperado: `137 passed, 1 skipped`. Ver `RUNBOOK_TESTS.md` para
+Resultado esperado: `138 passed, 1 skipped`. Ver `RUNBOOK_TESTS.md` para
 comandos completos de todos os repos e `RUNBOOK_RELEASE.md` para o release
 preflight.
 
@@ -125,9 +130,9 @@ previsao-cripto, que CONSOME `tools.secret_redaction` — ver
 
 ## 16. Pendências
 
-Ver `PENDENCIAS_ABERTAS.md` seções 3 e 6 (OP-1, OP-3, OP-5, OP-6, DEBT-1,
-DEBT-5) — nenhuma bloqueante, todas `CORRECTLY_DEFERRED` ou
-`OPEN_DOCUMENTATION_GAP` de baixo risco.
+Ver `PENDENCIAS_ABERTAS.md` seções 3 e 6 (OP-5, OP-6, DEBT-1, DEBT-5) —
+nenhuma bloqueante, todas `CORRECTLY_DEFERRED`. OP-1 resolvido em 1.3.1;
+OP-3 resolvido por `GLOSSARIO_STATUS.md` no workspace-raiz.
 
 ## 17. Riscos
 

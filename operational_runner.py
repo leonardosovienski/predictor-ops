@@ -54,8 +54,9 @@ def _replace_with_retry(temporary: Path, path: Path, attempts: int = 6, initial_
     """os.replace, retrying on transient Windows sharing-violation errors.
 
     Auditoria hostil 2026-07-17 (rodada "tools/"): dois processos perdendo a
-    corrida do lock ainda escrevem heartbeat concorrentemente (comportamento
-    pré-existente, não alterado aqui) — no Windows, os.replace pode lançar
+    corrida do lock escreviam heartbeat concorrentemente (OP-1; o perdedor
+    hoje escreve em skipped_heartbeat_path, mas dois perdedores simultâneos
+    ainda podem colidir no sidecar) — no Windows, os.replace pode lançar
     PermissionError (WinError 5) quando o destino está momentaneamente aberto
     por OUTRO os.replace concorrente (MoveFileEx com MOVEFILE_REPLACE_EXISTING
     falha nesse caso; diferente do POSIX rename(2), que não tem essa janela).
@@ -97,6 +98,17 @@ def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
 def write_heartbeat(path: Path, payload: dict[str, Any]) -> None:
     """Publish the current run state atomically; safe for health-check reads."""
     atomic_write_json(path, safe_redact_mapping(payload, collect_sensitive_values(os.environ)))
+
+
+def skipped_heartbeat_path(heartbeat: Path) -> Path:
+    """Sidecar heartbeat written by a run that lost the lock race.
+
+    O heartbeat principal pertence exclusivamente ao dono do lock: um perdedor
+    que escrevesse nele podia sobrescrever o estado RUNNING/final do vencedor
+    ("último a escrever vence") e era a origem da colisão de os.replace no
+    Windows absorvida por _replace_with_retry. O registro SKIPPED continua
+    observável aqui e no event log (serializado por lock próprio)."""
+    return heartbeat.with_name(f"{heartbeat.stem}.skipped{heartbeat.suffix or '.json'}")
 
 
 def append_event(path: Path, payload: dict[str, Any]) -> None:
@@ -424,7 +436,7 @@ def run(args: argparse.Namespace) -> int:
     record["lock"] = lock
     if not lock["acquired"]:
         finished = _finish(record, "SKIPPED", 4, started_monotonic, f"another instance holds lock: {lock_path}", sensitive_values)
-        write_heartbeat(heartbeat, finished)
+        write_heartbeat(skipped_heartbeat_path(heartbeat), finished)
         append_event(event_log, finished)
         return 4
 

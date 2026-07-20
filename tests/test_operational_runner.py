@@ -54,10 +54,27 @@ def test_lock_skips_second_instance(tmp_path: Path) -> None:
     heartbeat = tmp_path / "heartbeat.json"
     lock = heartbeat.with_suffix(".json.lock")
     lock.write_text("already running", encoding="ascii")
-    code, _, actual_heartbeat, _ = invoke(tmp_path, [sys.executable, "-c", "raise SystemExit(0)"])
+    code, _, actual_heartbeat, events = invoke(tmp_path, [sys.executable, "-c", "raise SystemExit(0)"])
     assert code == 4
     assert actual_heartbeat == heartbeat
-    assert read_heartbeat(heartbeat)["status"] == "SKIPPED"
+    sidecar = runner.skipped_heartbeat_path(heartbeat)
+    assert read_heartbeat(sidecar)["status"] == "SKIPPED"
+    assert json.loads(events.read_text(encoding="utf-8"))["status"] == "SKIPPED"
+
+
+def test_lock_loser_never_touches_winner_heartbeat(tmp_path: Path) -> None:
+    # Regressão OP-1: o perdedor da corrida do lock escrevia no MESMO heartbeat
+    # do vencedor — o SKIPPED podia sobrescrever o RUNNING/estado final do dono
+    # do lock e era a fonte da colisão de os.replace no Windows.
+    heartbeat = tmp_path / "heartbeat.json"
+    lock = heartbeat.with_suffix(".json.lock")
+    lock.write_text(json.dumps({"run_id": "winner", "pid": os.getpid()}), encoding="ascii")
+    winner_record = {"status": "RUNNING", "run_id": "winner"}
+    runner.write_heartbeat(heartbeat, winner_record)
+    code, _, _, _ = invoke(tmp_path, [sys.executable, "-c", "raise SystemExit(0)"])
+    assert code == 4
+    assert read_heartbeat(heartbeat) == winner_record
+    assert read_heartbeat(runner.skipped_heartbeat_path(heartbeat))["status"] == "SKIPPED"
 
 
 def test_missing_expected_artifact_is_partial(tmp_path: Path) -> None:

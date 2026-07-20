@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.1 — 2026-07-19
+
+Closes OP-1 (`PENDENCIAS_ABERTAS.md`): a runner instance that loses the lock
+race no longer writes `SKIPPED` to the shared heartbeat — where it raced the
+lock owner's writes and could overwrite the winner's RUNNING/final state — and
+instead publishes to a `<name>.skipped.json` sidecar
+(`operational_runner.skipped_heartbeat_path`) plus the serialized JSONL event
+log, unchanged. No live consumer read `SKIPPED` from the main heartbeat
+(verified by grep across the 5 live consumers). The Windows
+`os.replace` retry remains as a defense for two simultaneous losers colliding
+on the sidecar.
+
 ## 1.3.0 — 2026-07-17
 
 Adds `release_manifest.py`, a canonical generator/validator for

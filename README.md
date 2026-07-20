@@ -23,6 +23,12 @@ the child process tree, JSONL appends are serialized and durable, and persisted
 child output is bounded by the optional `--max-output-bytes` flag. Terminal
 records also expose additive output, lock, and timeout-termination diagnostics.
 
+Since 1.3.1, a run that loses the lock race no longer writes its `SKIPPED`
+record to the shared heartbeat (which could overwrite the lock owner's state,
+"last writer wins") — it writes to a `<name>.skipped.json` sidecar next to the
+heartbeat and, as before, to the serialized JSONL event log. The main heartbeat
+belongs exclusively to the lock owner.
+
 `ecosystem_health.py` loads its task list from the workspace-level
 `HEALTH_TASKS.json`; callers may pass a separate declarative file through
 `--tasks-file`. Run
