@@ -5,6 +5,7 @@ __pycache__/
 *.log
 *.jsonl
 *.heartbeat.json
+logs/
 *.lock
 .env
 .env.*

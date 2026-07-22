@@ -1,6 +1,6 @@
 # HANDOFF — tools/
 
-Verificado em: 2026-07-20. Commit-base anterior: `80eca1a` (`main`).
+Verificado em: 2026-07-22. Commit-base anterior: `2ed64e4` (`main`).
 
 ## 1. Identidade
 
@@ -17,14 +17,14 @@ a lista de não-objetivos completa.
 
 ## 3. Estado atual
 
-8 módulos, 100% stdlib (`pyproject.toml` declara `dependencies = []`),
+8 módulos Python + 2 scripts PowerShell, 100% stdlib (`pyproject.toml` declara `dependencies = []`),
 **139 testes passed, 1 skipped** (verificado 2026-07-20).
 `TOOLS_MANIFEST.json` em sincronia (`--check` retorna OK). API pública
 documentada em `README.md`. Nenhum bug de código conhecido em aberto.
 
 ## 4. Branch, versão e commit-base
 
-Branch atual `main`. `VERSION` e `pyproject.toml` = `1.3.1`.
+Branch atual `main`. `VERSION` e `pyproject.toml` = `1.3.2`.
 
 ## 5. Estado Git
 

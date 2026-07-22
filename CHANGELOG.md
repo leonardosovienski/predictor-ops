@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add a read-only 30-minute gate monitor for CS, LoL, F1 and Brasileirão.
+  It records scheduler health and each available shadow-sample status, treats
+  expected waiting states as non-errors, and never authorizes capital.
+
 - Reconcile the PEP 621 project version with `VERSION` at 1.3.1 and add a
   regression test that requires both declarations to match.
 

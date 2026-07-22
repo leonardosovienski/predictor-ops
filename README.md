@@ -78,3 +78,18 @@ invitation. The CLIs (`core_provenance.py`, `vendor_byte_audit.py`,
 `release_manifest.py`, `ecosystem_health.py`, `release_check.py`) are
 supported as command-line tools (their `--flags` are the contract); their
 Python-level functions are not.
+
+## Monitoramento dos gates
+
+`monitor_predictor_gates.ps1` produz um relatório somente-leitura para CS,
+LoL, F1 e Brasileirão: agenda do Windows, resultado da última execução e
+progresso dos gates de sombra. Estados `WAITING` e `PENDING_SAMPLE` não são
+falhas; tarefas ausentes, falhas de execução e relatórios inválidos fazem o
+monitor retornar código 1 para aparecer no Agendador. Ele nunca cria aposta,
+altera critérios ou autoriza capital.
+
+Para instalar a verificação recorrente a cada 30 minutos:
+
+```powershell
+powershell -File install_predictor_gate_monitor_task.ps1 -RunNow
+```
