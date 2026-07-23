@@ -6,7 +6,7 @@
 # antes de declará-la.
 [project]
 name = "tools"
-version = "1.3.2"
+version = "1.3.3"
 description = "Camada operacional canônica do ecossistema preditivo: runners, locks, provenance, redaction, manifests. Stdlib-only por design — nenhuma dependência externa."
 readme = "README.md"
 requires-python = ">=3.13"

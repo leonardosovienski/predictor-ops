@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "tools_version": "1.3.2",
-  "content_hash": "02f7cb2fa8f0d218c708f512a693501872a7b8e1e0f8bf8a071fa21786bf00ef",
+  "tools_version": "1.3.3",
+  "content_hash": "42c155e9742bee1ef07115ad7b775cd7cc8f09a72c37c1f659e23cf9c2753de5",
   "hash_algorithm": "sha256-path-nul-content-nul-v1",
   "included_files": [
     ".github/workflows/tools-tests.yml",
@@ -12,6 +12,7 @@
     "README.md",
     "core_provenance.py",
     "ecosystem_health.py",
+    "install_collection_only_tasks.ps1",
     "install_predictor_gate_monitor_task.ps1",
     "monitor_predictor_gates.ps1",
     "operational_runner.py",
@@ -40,5 +41,5 @@
     "VERSION"
   ],
   "release_commit": null,
-  "generated_at_utc": "2026-07-22T12:36:52Z"
+  "generated_at_utc": "2026-07-23T06:45:43Z"
 }

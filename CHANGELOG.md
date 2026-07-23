@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Route the four consumer COLLECTION_ONLY scheduled jobs through the strict
+  operational runner, including project-specific locks, timeouts, heartbeats
+  and structured events.  Closed scientific jobs remain disabled.
+
 - Add a read-only 30-minute gate monitor for CS, LoL, F1 and Brasileirão.
   It records scheduler health and each available shadow-sample status, treats
   expected waiting states as non-errors, and never authorizes capital.

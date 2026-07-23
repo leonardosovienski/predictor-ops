@@ -93,3 +93,7 @@ Para instalar a verificação recorrente a cada 30 minutos:
 ```powershell
 powershell -File install_predictor_gate_monitor_task.ps1 -RunNow
 ```
+
+`install_collection_only_tasks.ps1` instala as quatro coletas arquivísticas
+COLLECTION_ONLY através de `operational_runner.py`. O instalador não habilita
+nem altera os jobs científicos encerrados.
