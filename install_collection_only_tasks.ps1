@@ -4,6 +4,7 @@ param([switch]$RunNow)
 $ErrorActionPreference = "Stop"
 $workspace = Split-Path -Parent $PSScriptRoot
 $runner = Join-Path $PSScriptRoot "operational_runner.py"
+$runtimeRoot = Join-Path $env:LOCALAPPDATA "predictor-tools\runtime"
 $runnerPython = (& py -3.13 -c "import sys; print(sys.executable)").Trim()
 if (-not (Test-Path -LiteralPath $runnerPython) -or -not (Test-Path -LiteralPath $runner)) {
     throw "Python 3.13 ou operational_runner.py ausente"
@@ -16,7 +17,11 @@ function Register-CollectionOnlyTask {
         [Microsoft.Management.Infrastructure.CimInstance[]]$Trigger
     )
     $root = Join-Path $workspace $Project
-    $operations = Join-Path $root "logs\operations"
+    # Runtime data never belongs inside a consumer checkout: a heartbeat is
+    # evidence of an execution, not source or scientific data.  Keeping it
+    # under LOCALAPPDATA prevents normal scheduled runs from dirtying Git.
+    $operations = Join-Path $runtimeRoot (Join-Path $Project $Name)
+    New-Item -ItemType Directory -Force -Path $operations | Out-Null
     $child = @('-X','utf8',('"{0}"' -f $ChildScript)) + $ChildArgs
     $runnerArgs = @(
         ('"{0}"' -f $runner), '--task', $Name, '--project', $Project,

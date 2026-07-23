@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Move COLLECTION_ONLY runner artifacts from consumer repositories to the
+  per-user LOCALAPPDATA runtime root, preserving legacy evidence separately.
+
 - Route the four consumer COLLECTION_ONLY scheduled jobs through the strict
   operational runner, including project-specific locks, timeouts, heartbeats
   and structured events.  Closed scientific jobs remain disabled.

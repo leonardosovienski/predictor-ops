@@ -97,3 +97,8 @@ powershell -File install_predictor_gate_monitor_task.ps1 -RunNow
 `install_collection_only_tasks.ps1` instala as quatro coletas arquivísticas
 COLLECTION_ONLY através de `operational_runner.py`. O instalador não habilita
 nem altera os jobs científicos encerrados.
+
+Os logs, heartbeats, event logs, locks e temporários desses jobs são externos
+ao Git, em `%LOCALAPPDATA%\predictor-tools\runtime\<project>\<job_id>\`.
+Artefatos antigos que tenham ficado em um checkout são evidência legada e não
+são apagados pela migração; apenas deixam de receber escritas futuras.
