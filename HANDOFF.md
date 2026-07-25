@@ -1,5 +1,36 @@
 # HANDOFF — tools/
 
+## Estado compartilhado final — 2026-07-25
+
+### COLLECTION_ONLY
+
+As quatro tarefas operacionais usam exclusivamente `operational_runner.py`, com `--provenance-mode strict`, lock, timeout, redação de segredos, heartbeat atômico e event log:
+
+- `brasileirao-archival-collection` — diário, `brasileirao-predictor`.
+- `lol-archival-collection` — diário, `lol-predictor`.
+- `cs-archival-collection` — horário, `cs-predictor`.
+- `f1-archival-collection` — sexta/domingo, orientado pelo calendário.
+
+Os artefatos de operação ficam fora dos repositórios em `%LOCALAPPDATA%\predictor-tools\runtime\<project>\<job_id>\` (logs, heartbeats, JSONL de eventos, locks, temporários e status estruturado). Cópias históricas preservadas antes da migração não são destinos das Actions atuais.
+
+Os jobs encerrados permanecem **Disabled**: `lol-market-shadow`, `cs-market-shadow` e `f1-forward-snapshot`. Nenhuma Action COLLECTION_ONLY executa diretamente um script de consumidor.
+
+### Estado operacional conhecido
+
+- Brasileirão, LoL e F1 completaram a janela observacional anterior sem reabrir hipóteses, trials, gates ou closures.
+- CS está bloqueado por dependência externa: o contrato exige o export esportivo oficial `data/collection_only/upstream_events.json`, mas não há produtor configurado no workspace. Não criar scraper, fonte paralela ou backfill.
+- Arquivo CS ausente ou inválido produz `SOURCE_UNAVAILABLE`, com motivo sanitizado (`UPSTREAM_INPUT_MISSING` ou `UPSTREAM_INPUT_INVALID`), `accepted=0`, provenance e status no heartbeat/event log. JSON válido vazio produz `NO_UPSTREAM_EVENTS`.
+- Beyond Market continua `CLOSED_BY_HUMAN_DECISION`; o hash permanece `B86023DEE82BA186FC9E89B1F6A1A153131ECDBA879B4D189C770A3D7A21A284`.
+
+### Evidência mais recente
+
+- `release_manifest.py --check`: OK (tools 1.3.4).
+- Suíte tools: `141 passed, 1 skipped` com `PYTHONPATH=<workspace>;<workspace>/lol-predictor`.
+- Vendor audit: Brasileirão, LoL, CS e F1 `IDENTICAL`, 46/46 cada.
+- CS COLLECTION_ONLY: `tests/test_archival_collection.py` — `4 passed`.
+
+Único bloqueio restante: disponibilizar, fora deste repositório e por decisão operacional, o export esportivo oficial do CS no contrato acima. Isso não é falha do runner nem autorização para reabrir o NO_GO científico.
+
 Verificado em: 2026-07-22. Commit-base anterior: `2ed64e4` (`main`).
 
 ## 1. Identidade
