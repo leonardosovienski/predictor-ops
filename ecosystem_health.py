@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -36,6 +37,9 @@ TASKS: tuple[tuple[str, str, bool, int], ...] = ()
 
 
 def heartbeat_path(task_name: str, project: str) -> Path:
+    if task_name.endswith("-archival-collection"):
+        runtime = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "predictor-tools" / "runtime"
+        return runtime / project / task_name / f"{task_name}.heartbeat.json"
     if project == "workspace":
         return ROOT / "logs" / "operations" / f"{task_name}.heartbeat.json"
     return ROOT / project / "logs" / "operations" / f"{task_name}.heartbeat.json"
@@ -97,6 +101,9 @@ def assess_task(task_name: str, project: str, expected_enabled: bool, max_age_ho
         return item
     item["heartbeat"] = heartbeat
     status = heartbeat.get("status")
+    if status in {"SOURCE_UNAVAILABLE", "NO_UPSTREAM_EVENTS"}:
+        item.update(status=status, reason=heartbeat.get("operational_status", {}).get("reason", f"heartbeat status={status}"))
+        return item
     if status in {"FAILED", "TIMED_OUT", "PARTIAL"}:
         item.update(status="FAILED", reason=f"heartbeat status={status}")
         return item

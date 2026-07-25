@@ -39,6 +39,12 @@ def test_missing_heartbeat_is_unknown(tmp_path: Path, monkeypatch) -> None:
     assert health.assess_task("x", "p", True, 36, task(), None, NOW)["status"] == "UNKNOWN"
 
 
+def test_source_unavailable_is_not_reported_healthy() -> None:
+    heartbeat = {"status": "SOURCE_UNAVAILABLE", "finished_at_utc": "2026-07-15T00:00:00Z", "operational_status": {"reason": "UPSTREAM_INPUT_MISSING"}}
+    item = health.assess_task("x", "p", True, 36, task(), heartbeat, NOW)
+    assert item["status"] == "SOURCE_UNAVAILABLE" and item["reason"] == "UPSTREAM_INPUT_MISSING"
+
+
 def test_expected_disabled_legacy_task_is_skipped(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(health, "heartbeat_path", lambda *_: tmp_path / "h.json")
     assert health.assess_task("x", "p", False, 36, task(enabled=False), None, NOW)["status"] == "SKIPPED"

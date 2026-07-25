@@ -473,7 +473,18 @@ def run(args: argparse.Namespace) -> int:
                 if drain["truncated"]:
                     output.write("\n[OUTPUT_TRUNCATED]\n")
                 child_exit = child.returncode
-                if child_exit == 0 and args.expected_artifact and not Path(args.expected_artifact).exists():
+                consumer_status = None
+                if args.consumer_status_json:
+                    try:
+                        candidate = json.loads(Path(args.consumer_status_json).read_text(encoding="utf-8"))
+                        if isinstance(candidate, dict) and isinstance(candidate.get("status"), str):
+                            consumer_status = {key: candidate[key] for key in ("status", "reason", "collection_run_id", "accepted", "ambiguous", "invalid", "complete", "input_present") if key in candidate}
+                    except (OSError, json.JSONDecodeError):
+                        consumer_status = {"status": "SOURCE_UNAVAILABLE", "reason": "CONSUMER_STATUS_UNAVAILABLE"}
+                if child_exit == 0 and consumer_status and consumer_status["status"] in {"SOURCE_UNAVAILABLE", "NO_UPSTREAM_EVENTS"}:
+                    finished = _finish(record, consumer_status["status"], 0, started_monotonic, sensitive_values=sensitive_values)
+                    finished["operational_status"] = consumer_status
+                elif child_exit == 0 and args.expected_artifact and not Path(args.expected_artifact).exists():
                     finished = _finish(record, "PARTIAL", 1, started_monotonic, "expected artifact was not found", sensitive_values)
                 elif args.partial_exit_code is not None and child_exit == args.partial_exit_code:
                     finished = _finish(record, "PARTIAL", child_exit, started_monotonic, "child reported a partial execution", sensitive_values)
@@ -512,6 +523,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--partial-exit-code", type=int)
     parser.add_argument("--provenance-mode", choices=("strict", "permissive"), default="strict")
     parser.add_argument("--consumer-provenance-json", help="optional redacted JSON object supplied by the consumer")
+    parser.add_argument("--consumer-status-json", help="optional structured operational status JSON supplied by the consumer")
     return parser
 
 

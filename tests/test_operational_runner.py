@@ -94,6 +94,17 @@ def test_child_partial_exit_is_preserved_and_observable(tmp_path: Path) -> None:
     assert json.loads(events.read_text(encoding="utf-8"))["exit_code"] == 10
 
 
+def test_consumer_source_unavailable_status_reaches_heartbeat(tmp_path: Path) -> None:
+    status = tmp_path / "consumer-status.json"
+    heartbeat = tmp_path / "heartbeat.json"
+    log, events = tmp_path / "human.log", tmp_path / "events.jsonl"
+    child = f"from pathlib import Path; Path(r'{status}').write_text('{{\"status\":\"SOURCE_UNAVAILABLE\",\"reason\":\"UPSTREAM_INPUT_MISSING\"}}')"
+    code = runner.main(["run", "--task", "source", "--project", "test", "--cwd", str(tmp_path), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--consumer-status-json", str(status), "--provenance-mode", "permissive", "--", sys.executable, "-c", child])
+    record = read_heartbeat(heartbeat)
+    assert code == 0 and record["status"] == "SOURCE_UNAVAILABLE"
+    assert record["operational_status"]["reason"] == "UPSTREAM_INPUT_MISSING"
+
+
 def test_invalid_working_directory_is_observable(tmp_path: Path) -> None:
     log, heartbeat, events = tmp_path / "x.log", tmp_path / "x.json", tmp_path / "x.jsonl"
     code = runner.main(["run", "--task", "bad", "--project", "test", "--cwd", str(tmp_path / "absent"), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--provenance-mode", "permissive", "--", sys.executable, "-c", "pass"])
