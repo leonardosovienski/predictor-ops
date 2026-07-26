@@ -35,7 +35,7 @@ $lol = Join-Path $root "lol-predictor"
 $br = Join-Path $root "brasileirao-predictor"
 $brPython = (& py -3.13 -c "import sys; print(sys.executable)").Trim()
 if (-not $brPython -or -not (Test-Path $brPython)) {
-    throw "Python 3.13 global não está disponível para brasileirao-predictor"
+    throw "Python 3.13 global nao esta disponivel para brasileirao-predictor"
 }
 
 $result = [ordered]@{
