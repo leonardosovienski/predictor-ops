@@ -345,7 +345,7 @@ def _terminate_process_tree(child: subprocess.Popen[bytes]) -> dict[str, Any]:
         return result
     try:
         if os.name == "nt":
-            completed = subprocess.run(["taskkill", "/PID", str(child.pid), "/T", "/F"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=10)
+            completed = subprocess.run(["taskkill", "/PID", str(child.pid), "/T", "/F"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=10, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0)
             result["taskkill_exit_code"] = completed.returncode
         else:
             os.killpg(child.pid, signal.SIGKILL)
@@ -451,7 +451,14 @@ def run(args: argparse.Namespace) -> int:
             try:
                 popen_options: dict[str, Any] = {"cwd": str(cwd), "env": environment, "stdout": subprocess.PIPE, "stderr": subprocess.STDOUT}
                 if os.name == "nt":
-                    popen_options["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+                    # CREATE_NO_WINDOW junto do grupo de processos: a tarefa
+                    # agendada roda sob pythonw.exe, que nao tem console, entao
+                    # este filho — um python.exe de console — ganharia um
+                    # console PROPRIO E VISIVEL a cada disparo. O stdout ja e
+                    # PIPE e drenado, entao nada de saida se perde.
+                    popen_options["creationflags"] = (
+                        getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+                        | getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000))
                 else:
                     popen_options["start_new_session"] = True
                 child = subprocess.Popen(args.command, **popen_options)

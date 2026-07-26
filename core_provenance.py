@@ -246,6 +246,10 @@ def _probe_consumer(consumer_root: Path, vendor_root: Path, *, mode: str, script
             capture_output=True,
             timeout=timeout,
             check=False,
+            # A sonda roda sob pythonw.exe nas tarefas agendadas, que nao tem
+            # console: sem isto o Python filho abre uma janela visivel a cada
+            # disparo. A saida ja e capturada.
+            creationflags=0x08000000 if sys.platform == "win32" else 0,
         )
     except subprocess.TimeoutExpired:
         return {"error": f"probe timed out after {timeout:g}s"}

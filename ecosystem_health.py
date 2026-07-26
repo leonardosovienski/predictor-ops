@@ -60,7 +60,9 @@ def query_task(task_name: str) -> dict[str, Any] | None:
         "WorkingDirectory=($t.Actions|ForEach-Object {$_.WorkingDirectory}) -join ';';"
         "MultipleInstances=[string]$t.Settings.MultipleInstances;StartWhenAvailable=[bool]$t.Settings.StartWhenAvailable} | ConvertTo-Json -Compress"
     )
-    result = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script], capture_output=True, text=True, timeout=15, check=False)
+    # creationflags: sob pythonw.exe (toda tarefa agendada) nao ha console, e
+    # este powershell.exe abriria uma janela visivel. Saida ja capturada.
+    result = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script], capture_output=True, text=True, timeout=15, check=False, creationflags=0x08000000 if sys.platform == "win32" else 0)
     if result.returncode != 0:
         return None
     value = json.loads(result.stdout)

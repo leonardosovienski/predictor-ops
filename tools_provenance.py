@@ -11,7 +11,17 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
+import sys
 from typing import Any
+
+# `pythonw.exe` — o executavel de TODA tarefa agendada deste ecossistema — nao
+# tem console. Um processo de CONSOLE lancado a partir dele ganha um console
+# PROPRIO E VISIVEL: janela preta piscando na tela do dono. Este modulo chama
+# `git` uma vez por arquivo rastreado em `content_hash` (35 hoje), mais
+# rev-parse, status e ls-files: ~38 janelas por invocacao do runner, de hora em
+# hora. CREATE_NO_WINDOW impede sem esconder nada — toda saida aqui ja e
+# capturada. Vale 0 fora do Windows, onde o conceito nao existe.
+NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
 
 MANIFEST_NAME = "TOOLS_MANIFEST.json"
 SCHEMA_VERSION = "1.0"
@@ -33,7 +43,8 @@ def default_tools_root() -> Path:
 
 def _git(root: Path, *args: str) -> str:
     result = subprocess.run(["git", "-C", str(root), *args], text=True,
-                            capture_output=True, check=False)
+                            capture_output=True, check=False,
+                            creationflags=NO_WINDOW)
     if result.returncode != 0:
         detail = result.stderr.strip() or result.stdout.strip() or "git command failed"
         raise ToolsProvenanceError(detail)
@@ -42,7 +53,7 @@ def _git(root: Path, *args: str) -> str:
 
 def _git_bytes(root: Path, *args: str) -> bytes:
     result = subprocess.run(["git", "-C", str(root), *args], capture_output=True,
-                            check=False)
+                            check=False, creationflags=NO_WINDOW)
     if result.returncode != 0:
         detail = result.stderr.decode("utf-8", errors="replace").strip() or "git command failed"
         raise ToolsProvenanceError(detail)
