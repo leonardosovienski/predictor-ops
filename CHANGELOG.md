@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+- Stop the two PowerShell monitors (`predictor-gate-monitor`,
+  `predictor-task-health`) from opening a console window on the owner's
+  desktop at every trigger — every 30 minutes in the gate monitor's case.
+  Under `LogonType Interactive` the Windows console host creates the window
+  *before* PowerShell starts, so the `-WindowStyle Hidden` already present in
+  the arguments never had a chance; and because the action set no
+  `WorkingDirectory`, the console opened in `C:\Windows\System32`. Switching
+  the principal to `S4U` is the canonical fix but requires elevation
+  (`Set-ScheduledTask` and `Register-ScheduledTask -Force` both return access
+  denied). Instead the tasks now run `pythonw.exe` — GUI subsystem, never
+  creates a console — against the new `run_hidden.py`, which launches the real
+  command with `CREATE_NO_WINDOW` and **propagates the child exit code**. The
+  propagation is a requirement, not a detail: the gate monitor exits 1 on a
+  degraded task and `monitor_task_health.ps1` reads that `LastTaskResult`.
+
+- Add `install_task_health_monitor_task.ps1`. `predictor-task-health` had been
+  registered by hand and was the only scheduled task in the ecosystem without
+  a versioned installer, which is why its principal was never reviewed.
+
+- Regenerate `TOOLS_MANIFEST.json` after `monitor_task_health.ps1` was added
+  without it, and add a regression test that validates the **real** checked-in
+  manifest. Every existing manifest test used a synthetic repository in
+  `tmp_path`, so the suite stayed green while `collect_tools_provenance` raised
+  and `operational_runner` returned exit 3 fail-closed for every scheduled task
+  in the ecosystem. One real run (`cs-archival-collection`, 15:22) failed
+  inside the 34-minute window before it was caught.
+
+- Declare `pythonpath = [".."]` for pytest. The suite required
+  `PYTHONPATH=<workspace>` passed by hand; without it four modules failed to
+  collect. The sys.path consumption contract is unchanged — only declared where
+  pytest reads it.
+
 - Move COLLECTION_ONLY runner artifacts from consumer repositories to the
   per-user LOCALAPPDATA runtime root, preserving legacy evidence separately.
 
