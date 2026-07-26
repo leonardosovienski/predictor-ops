@@ -21,6 +21,17 @@
   registered by hand and was the only scheduled task in the ecosystem without
   a versioned installer, which is why its principal was never reviewed.
 
+- Move both monitors to a single daily run, by the owner's decision:
+  `predictor-task-health` at **07:00** (it writes the `ALERTA_TAREFAS.txt` the
+  owner actually reads, so it should be ready when the day starts) and
+  `predictor-gate-monitor` at **00:00** (after the whole night collection
+  chain — 21:30, 22:00, 22:30, 23:00 — so its snapshot covers a full day).
+  Previously every 6h and every 30min. `-StartWhenAvailable` was already set
+  and matters more now that each has one chance per day instead of 4 and 48.
+  The overdue check in `monitor_task_health.ps1` compares against each task's
+  own `NextRunTime`, not a fixed interval, so daily cadence raises no false
+  "atrasada".
+
 - Regenerate `TOOLS_MANIFEST.json` after `monitor_task_health.ps1` was added
   without it, and add a regression test that validates the **real** checked-in
   manifest. Every existing manifest test used a synthetic repository in

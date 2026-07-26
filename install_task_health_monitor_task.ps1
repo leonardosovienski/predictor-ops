@@ -30,7 +30,12 @@ if (-not $pythonw -or -not (Test-Path $pythonw)) {
 
 $arguments = '"{0}" powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "{1}"' -f $launcher, $script
 $action = New-ScheduledTaskAction -Execute $pythonw -Argument $arguments
-$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(3) -RepetitionInterval (New-TimeSpan -Hours 6)
+# Diario as 07:00, por decisao do dono em 2026-07-26 (era de 6 em 6 horas).
+# Este e o monitor que escreve o ALERTA_TAREFAS.txt na raiz -- o arquivo que o
+# dono LE. As 07:00 ele ja esta pronto quando o dia comeca, refletindo a noite
+# inteira de coleta. `-StartWhenAvailable` (abaixo) recupera o disparo se a
+# maquina estiver desligada, que agora e a unica chance do dia.
+$trigger = New-ScheduledTaskTrigger -Daily -At "07:00"
 $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 10) -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
 $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName $name -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description "Exit code and overdue monitor for every ecosystem scheduled task; writes/removes ALERTA_TAREFAS.txt" -Force | Out-Null

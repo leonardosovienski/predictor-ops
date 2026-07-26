@@ -37,7 +37,14 @@ if (-not $pythonw -or -not (Test-Path $pythonw)) {
 
 $arguments = '"{0}" powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "{1}"' -f $launcher, $script
 $action = New-ScheduledTaskAction -Execute $pythonw -Argument $arguments
-$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(5) -RepetitionInterval (New-TimeSpan -Minutes 30)
+# Diario a meia-noite, por decisao do dono em 2026-07-26 (era de 30 em 30
+# minutos). 00:00 e depois de toda a cadeia noturna de coleta -- GarimpoV3Daily
+# 21:30, GarimpoFase1 22:00, cripto-watchdog 22:30, brasileirao-sombra-noite
+# 23:00 --, entao o retrato de gates cobre o dia inteiro em vez de pegar o
+# funil no meio. `-StartWhenAvailable` (abaixo) recupera o disparo se a maquina
+# estiver desligada na hora, o que importa mais agora que ha uma chance por dia
+# em vez de 48.
+$trigger = New-ScheduledTaskTrigger -Daily -At "00:00"
 $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 5) -MultipleInstances IgnoreNew -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
 $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName $name -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description "Read-only health and gate progress monitor for CS, LoL, F1 and Brasileirao" -Force | Out-Null
