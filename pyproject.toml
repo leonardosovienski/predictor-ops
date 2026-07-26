@@ -14,3 +14,8 @@ dependencies = []
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# A raiz do workspace precisa estar na sys.path para `import tools.x` — e o
+# consumo desta camada e por sys.path, nao por `pip install`. Declarar aqui
+# torna a suite reproduzivel com `python -m pytest` puro; antes ela exigia
+# PYTHONPATH=<workspace> passado a mao, e sem ele 4 modulos nem coletavam.
+pythonpath = [".."]

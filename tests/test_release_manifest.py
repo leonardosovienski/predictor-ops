@@ -345,6 +345,25 @@ def test_importable_as_tools_package_from_outside_tools_dir() -> None:
     assert probe.returncode == 0, probe.stderr
 
 
+def test_checked_in_manifest_matches_this_repository() -> None:
+    """O manifesto REAL desta checkout precisa cobrir o conteudo REAL.
+
+    Regressao de B-11 (2026-07-26): o commit d104d01 adicionou
+    `monitor_task_health.ps1` sem regenerar TOOLS_MANIFEST.json. Todo teste
+    deste arquivo usava repositorio sintetico em tmp_path, entao a suite
+    ficou verde enquanto `collect_tools_provenance` passou a levantar
+    "manifest included_files differs from tracked content" — e o
+    operational_runner, que envelopa TODAS as tarefas agendadas do
+    ecossistema, passou a devolver exit 3 fail-closed em qualquer invocacao,
+    strict ou permissive.
+
+    O custo de nao ter este teste foi 23 testes vermelhos atribuidos a causa
+    errada e uma parada silenciosa a espera do proximo disparo do Scheduler.
+    """
+    root = Path(__file__).resolve().parents[1]
+    assert generator.cmd_check(root) == 0
+
+
 def test_project_metadata_version_matches_version_file() -> None:
     """Um bump de release deve atualizar as duas fontes declarativas."""
     root = Path(__file__).resolve().parents[1]
