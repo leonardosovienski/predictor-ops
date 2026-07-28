@@ -1,0 +1,48 @@
+name: Reusable Python CI
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        required: false
+        type: string
+        default: '3.11'
+      run-dotnet:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  validate:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: 'pip'
+
+      - name: Setup .NET (se necessário)
+        if: ${{ inputs.run-dotnet }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Instalar Dependências
+        run: |
+          python -m pip install --upgrade pip
+          # Instala o que achar pela frente
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          if [ -f pyproject.toml ]; then pip install .; fi
+
+      - name: Quality Check & Tests
+        run: |
+          # Se você usar ruff ou flake8, coloque aqui. Exemplo:
+          # ruff check . 
+          # pytest -v
+          python -m pytest -v
