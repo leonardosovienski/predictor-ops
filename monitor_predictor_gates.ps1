@@ -20,13 +20,36 @@ function Get-TaskSnapshot([string]$Name) {
     }
 }
 
+# Terminal scientific states a gate probe may declare while exiting non-zero.
+# A declared closure is a RESULT, not a malfunction: cs-predictor's
+# market_shadow_status.py exits 3 precisely to report
+# CLOSED_BY_HUMAN_DECISION, and the previous "any non-zero exit is ERROR"
+# rule turned that expected end state into a permanent degraded signal,
+# which in turn masked a real failure (lol-ratings-semanal LastTaskResult=10)
+# behind an alert that was already on.
+$script:TerminalScientificStatus = @("CLOSED_BY_HUMAN_DECISION")
+
 function Invoke-JsonCommand([string]$Python, [string]$Script, [string[]]$Arguments = @()) {
     $raw = & $Python -X utf8 $Script @Arguments 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        return @{ status = "ERROR"; exit_code = $LASTEXITCODE; output = (@($raw) -join "`n") }
+    $exitCode = $LASTEXITCODE
+    $text = (@($raw) -join "`n")
+    $payload = $null
+    try { $payload = ($text | ConvertFrom-Json) } catch { $payload = $null }
+    # Unparseable output is always an error, whatever the exit code says.
+    if ($null -eq $payload) {
+        return @{ status = "ERROR"; exit_code = $exitCode; output = $text }
     }
-    try { return @{ status = "OK"; payload = (($raw -join "`n") | ConvertFrom-Json) } }
-    catch { return @{ status = "ERROR"; exit_code = 0; output = (@($raw) -join "`n") } }
+    if ($exitCode -eq 0) {
+        return @{ status = "OK"; exit_code = 0; payload = $payload }
+    }
+    # Non-zero exit WITH parseable output: only an explicitly declared
+    # terminal state is accepted as expected.  Anything else stays ERROR with
+    # the exit code preserved: this is deliberately not a blanket amnesty for
+    # non-zero exits.
+    if ($script:TerminalScientificStatus -contains [string]$payload.scientific_status) {
+        return @{ status = "CLOSED"; exit_code = $exitCode; payload = $payload }
+    }
+    return @{ status = "ERROR"; exit_code = $exitCode; output = $text }
 }
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -41,7 +64,7 @@ if (-not $brPython -or -not (Test-Path $brPython)) {
 $result = [ordered]@{
     schema_version = "predictor-gate-monitor/v1"
     generated_at_utc = [DateTime]::UtcNow.ToString("o")
-    scope = "read-only; no capital authorization; WAITING/PENDING_SAMPLE are expected scientific states"
+    scope = "read-only; no capital authorization; WAITING/PENDING_SAMPLE are expected scientific states; gate status CLOSED is a declared terminal result, not a failure"
     tasks = @(
         (Get-TaskSnapshot "cs-ratings-semanal"),
         (Get-TaskSnapshot "cs-market-shadow"),
@@ -62,7 +85,7 @@ $degraded = @($result.tasks | Where-Object {
     $_.status -ne "PRESENT" -or
     ($_.state -ne "Running" -and $_.last_task_result -ne 0)
 }).Count -gt 0
-$degraded = $degraded -or @($result.gates.Values | Where-Object { $_.status -ne "OK" }).Count -gt 0
+$degraded = $degraded -or @($result.gates.Values | Where-Object { $_.status -notin @("OK", "CLOSED") }).Count -gt 0
 
 $directory = Split-Path -Parent $OutputPath
 New-Item -ItemType Directory -Force -Path $directory | Out-Null

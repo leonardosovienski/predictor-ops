@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- Stop the gate monitor from reporting a declared scientific closure as a
+  probe error.  A gate probe that exits non-zero while emitting parseable
+  output declaring a terminal state (today only `CLOSED_BY_HUMAN_DECISION`)
+  is now recorded as `CLOSED` and does not degrade the run.  Non-zero exits
+  that are unparseable, or that declare no terminal state, remain `ERROR`
+  with the exit code preserved -- this is deliberately not a blanket amnesty
+  for non-zero exits.
+
+  Observed live on 2026-07-25: cs-predictor's `market_shadow_status.py` exited
+  3 to report `CLOSED_BY_HUMAN_DECISION`, the monitor classified it as
+  `ERROR`, and the resulting permanent alert masked a real failure
+  (`lol-ratings-semanal` `LastTaskResult=10`).  By 2026-07-28 the CS cohort
+  had been reopened by a separate decision and that probe exits 0 again
+  (`PENDING_SETTLEMENT`, 29/50 matured), so the specific false positive is no
+  longer reproducible; the classification rule is kept because any gate probe
+  may declare a terminal state this way, and the `lol-ratings-semanal`
+  failure it was hiding is real and still open.
+
 - Stop the two PowerShell monitors (`predictor-gate-monitor`,
   `predictor-task-health`) from opening a console window on the owner's
   desktop at every trigger — every 30 minutes in the gate monitor's case.
