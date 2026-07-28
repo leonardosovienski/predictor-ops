@@ -1,6 +1,7 @@
 name: Reusable Python CI
 
 on:
+  # 1. Permite que outros repositórios (preditores) chamem este arquivo
   workflow_call:
     inputs:
       python-version:
@@ -12,6 +13,12 @@ on:
         type: boolean
         default: false
 
+  # 2. Permite que o arquivo rode NESTE próprio repositório quando você der push
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
 jobs:
   validate:
     name: Lint & Test
@@ -20,14 +27,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Python ${{ inputs.python-version }}
+      # Usa a versão do input SE vier de outro repo, senão usa 3.11 por padrão
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ inputs.python-version }}
+          python-version: ${{ inputs.python-version || '3.11' }}
           cache: 'pip'
 
-      - name: Setup .NET (se necessário)
-        if: ${{ inputs.run-dotnet }}
+      # Só roda o .NET se o input for passado explicitamente como true (ex: Brasileirão)
+      - name: Setup .NET
+        if: ${{ inputs.run-dotnet == true }}
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
@@ -35,14 +44,15 @@ jobs:
       - name: Instalar Dependências
         run: |
           python -m pip install --upgrade pip
-          # Instala o que achar pela frente
+          
+          # Instala o pytest explicitamente para garantir que a suíte não falhe por falta dele
+          pip install pytest 
+          
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
           if [ -f pyproject.toml ]; then pip install .; fi
 
-      - name: Quality Check & Tests
+      - name: Executar Testes
         run: |
-          # Se você usar ruff ou flake8, coloque aqui. Exemplo:
-          # ruff check . 
-          # pytest -v
-          python -m pytest -v
+          # PYTHONPATH=. garante que o Python ache os módulos da pasta atual
+          PYTHONPATH=. python -m pytest -v
