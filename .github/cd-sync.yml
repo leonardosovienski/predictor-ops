@@ -1,0 +1,60 @@
+name: CD - Distribuir para Preditores
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  sync-consumers:
+    name: Sync para ${{ matrix.consumer }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # Se falhar em um preditor, continua nos outros
+      matrix:
+        consumer:
+          - cs-predictor
+          - lol-predictor
+          - f1-predictor
+          - brasileirao-predictor
+          - cripto-predictor
+          - ecosystem-predictor
+          - wc-predictor
+          - stocks-predictor
+          # adicione os outros aqui
+          
+    steps:
+      - name: Checkout do Provedor (Core/Tools)
+        uses: actions/checkout@v4
+        with:
+          path: provider_repo
+
+      - name: Checkout do Consumidor (${{ matrix.consumer }})
+        uses: actions/checkout@v4
+        with:
+          repository: leonardosovienski/${{ matrix.consumer }}
+          token: ${{ secrets.SYNC_PAT_TOKEN }} # Lembre-se de ter esse token no repositório!
+          path: consumer_repo
+
+      - name: Instalar dependências de Sync
+        working-directory: ./provider_repo
+        run: pip install pydantic httpx curl_cffi
+
+      - name: Executar Motor de Distribuição
+        working-directory: ./provider_repo
+        run: |
+          # Aqui roda o seu script. 
+          # Como os repositorios estao lado a lado, o script precisa saber onde injetar os arquivos.
+          # Você pode precisar passar o path do consumer via argumento, ex:
+          PYTHONPATH=.. python sync_core.py --write --target ../consumer_repo
+          
+          # NOTA: Se o seu script sync_core.py atualmente baixa o repositório por conta própria, 
+          # você pode simplificar este step e remover o checkout do consumer acima.
+
+      - name: Commitar no Consumidor
+        working-directory: ./consumer_repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add vendor/
+          git diff --quiet && git diff --staged --quiet || git commit -m "chore(vendor): auto-sync versão ${{ github.event.release.tag_name }}"
+          git push
