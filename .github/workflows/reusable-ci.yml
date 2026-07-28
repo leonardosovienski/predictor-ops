@@ -13,7 +13,7 @@ on:
         type: boolean
         default: false
 
-  # 2. Permite que o arquivo rode NESTE próprio repositório quando você der push
+  # 2. Permite que o arquivo rode NESTE próprio repositório (Tools) quando você der push
   push:
     branches: [ "main" ]
   pull_request:
@@ -48,11 +48,14 @@ jobs:
           # Instala o pytest explicitamente para garantir que a suíte não falhe por falta dele
           pip install pytest 
           
+          # Instala apenas dependências listadas nos .txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          if [ -f pyproject.toml ]; then pip install .; fi
+          
+          # O pyproject.toml é resolvido via sys.path no ecossistema, 
+          # por isso não executamos 'pip install .' aqui.
 
       - name: Executar Testes
         run: |
-          # PYTHONPATH=. garante que o Python ache os módulos da pasta atual
+          # PYTHONPATH=. garante que o Python ache os módulos da pasta atual 
           PYTHONPATH=. python -m pytest -v
