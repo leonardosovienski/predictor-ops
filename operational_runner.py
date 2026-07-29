@@ -241,8 +241,9 @@ def _configuration_failure_record(args: argparse.Namespace, run_id: str, started
         "expected_artifact": str(Path(args.expected_artifact).resolve()) if args.expected_artifact else None,
         "log_path": str(Path(args.log).resolve()),
         "heartbeat_path": str(Path(args.heartbeat).resolve()),
-        "tools_provenance": {"status": "UNAVAILABLE", "error": safe_redact_text(error, sensitive_values)[:1000]},
-    }
+        "tools_provenance": {
+            "status": "UNAVAILABLE",
+            "error": safe_redact_text(str(error), sensitive_values)[:1000]},    }
     return _finish(record, "FAILED", 3, started, str(error), sensitive_values)
 
 
