@@ -1,17 +1,6 @@
-name: Reusable Python CI
+name: CI - Tools Predictor
 
 on:
-  workflow_call:
-    inputs:
-      python-version:
-        required: false
-        type: string
-        default: '3.11'
-      run-dotnet:
-        required: false
-        type: boolean
-        default: false
-
   push:
     branches: [ "main" ]
   pull_request:
@@ -28,14 +17,8 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ inputs.python-version || '3.11' }}
+          python-version: '3.11'
           cache: 'pip'
-
-      - name: Setup .NET
-        if: ${{ inputs.run-dotnet == true }}
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
 
       - name: Instalar Dependências
         run: |
@@ -59,4 +42,4 @@ jobs:
 
       - name: Executar Testes
         run: |
-          python -m pytest -v
+          PYTHONPATH=. python -m pytest -v
