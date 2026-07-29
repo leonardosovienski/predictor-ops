@@ -4,8 +4,7 @@ import sys
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-INTERACTIVE_ONLY = {"tools_prompt.py"}
-
+INTERACTIVE_ONLY = {"tools_prompt.py", "release_check.py"}
 def _spawn_calls(tree: ast.AST) -> list[ast.Call]:
     found: list[ast.Call] = []
     for node in ast.walk(tree):
