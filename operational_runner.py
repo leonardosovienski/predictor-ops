@@ -19,6 +19,11 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Sequence
 
+try:
+    from tools._win32_compat import CREATE_NO_WINDOW
+except ModuleNotFoundError:
+    from _win32_compat import CREATE_NO_WINDOW  # type: ignore[no-redef]
+
 try:  # Supports both ``python tools/operational_runner.py`` and package imports in tests.
     from tools.secret_redaction import (
         collect_sensitive_values,
@@ -39,8 +44,6 @@ try:
 except ModuleNotFoundError:
     from tools_provenance import ToolsProvenanceError, collect_tools_provenance  # type: ignore[no-redef]
 
-sys.dont_write_bytecode = True
-
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
@@ -54,9 +57,8 @@ def _replace_with_retry(temporary: Path, path: Path, attempts: int = 6, initial_
     """os.replace, retrying on transient Windows sharing-violation errors.
 
     Auditoria hostil 2026-07-17 (rodada "tools/"): dois processos perdendo a
-    corrida do lock escreviam heartbeat concorrentemente (OP-1; o perdedor
-    hoje escreve em skipped_heartbeat_path, mas dois perdedores simultâneos
-    ainda podem colidir no sidecar) — no Windows, os.replace pode lançar
+    corrida do lock escreviam heartbeat concorrentemente (OP-1). Perdedoras
+    agora publicam sidecars identificados por run_id; no Windows, os.replace pode lançar
     PermissionError (WinError 5) quando o destino está momentaneamente aberto
     por OUTRO os.replace concorrente (MoveFileEx com MOVEFILE_REPLACE_EXISTING
     falha nesse caso; diferente do POSIX rename(2), que não tem essa janela).
@@ -100,7 +102,7 @@ def write_heartbeat(path: Path, payload: dict[str, Any]) -> None:
     atomic_write_json(path, safe_redact_mapping(payload, collect_sensitive_values(os.environ)))
 
 
-def skipped_heartbeat_path(heartbeat: Path) -> Path:
+def skipped_heartbeat_path(heartbeat: Path, run_id: str | None = None) -> Path:
     """Sidecar heartbeat written by a run that lost the lock race.
 
     O heartbeat principal pertence exclusivamente ao dono do lock: um perdedor
@@ -108,7 +110,39 @@ def skipped_heartbeat_path(heartbeat: Path) -> Path:
     ("último a escrever vence") e era a origem da colisão de os.replace no
     Windows absorvida por _replace_with_retry. O registro SKIPPED continua
     observável aqui e no event log (serializado por lock próprio)."""
-    return heartbeat.with_name(f"{heartbeat.stem}.skipped{heartbeat.suffix or '.json'}")
+    suffix = heartbeat.suffix or ".json"
+    identity = f".{run_id}" if run_id else ""
+    return heartbeat.with_name(f"{heartbeat.stem}.skipped{identity}{suffix}")
+
+
+def attempt_heartbeat_path(heartbeat: Path, run_id: str, kind: str) -> Path:
+    """Return an attempt-local record path for a process without lock ownership."""
+    suffix = heartbeat.suffix or ".json"
+    return heartbeat.with_name(f"{heartbeat.stem}.{kind}.{run_id}{suffix}")
+
+
+def _lock_owned_by(path: Path, run_id: str) -> bool:
+    try:
+        return json.loads(path.read_text(encoding="ascii")).get("run_id") == run_id
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
+def _release_run_lock(path: Path, run_id: str) -> None:
+    """Release only the lock created by this run, never a reclaimed successor."""
+    if _lock_owned_by(path, run_id):
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _write_owned_heartbeat(heartbeat: Path, lock_path: Path, run_id: str, payload: dict[str, Any]) -> None:
+    """Publish to the shared heartbeat only while this run still owns its lease."""
+    if _lock_owned_by(lock_path, run_id):
+        write_heartbeat(heartbeat, payload)
+    else:
+        write_heartbeat(attempt_heartbeat_path(heartbeat, run_id, "superseded"), payload)
 
 
 def append_event(path: Path, payload: dict[str, Any]) -> None:
@@ -116,6 +150,7 @@ def append_event(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     encoded = (json.dumps(safe_redact_mapping(payload, collect_sensitive_values(os.environ)), ensure_ascii=False, sort_keys=True) + "\n").encode("utf-8")
     lock_path = path.with_name(f".{path.name}.append.lock")
+    lock_token = uuid.uuid4().hex
     deadline = time.monotonic() + 30
     lock_descriptor: int | None = None
     while lock_descriptor is None:
@@ -127,10 +162,16 @@ def append_event(path: Path, payload: dict[str, Any]) -> None:
             except FileNotFoundError:
                 continue
             if stale:
+                reclaimed_path = lock_path.with_name(f".{lock_path.name}.reclaimed.{uuid.uuid4().hex}")
                 try:
-                    lock_path.unlink()
+                    os.replace(lock_path, reclaimed_path)
                 except FileNotFoundError:
                     pass
+                else:
+                    try:
+                        reclaimed_path.unlink()
+                    except FileNotFoundError:
+                        pass
                 continue
             if time.monotonic() >= deadline:
                 raise OSError(f"timed out waiting for JSONL append lock: {lock_path}")
@@ -139,7 +180,10 @@ def append_event(path: Path, payload: dict[str, Any]) -> None:
     if hasattr(os, "O_BINARY"):
         flags |= os.O_BINARY
     try:
+        os.write(lock_descriptor, lock_token.encode("ascii"))
+        os.fsync(lock_descriptor)
         os.close(lock_descriptor)
+        lock_descriptor = None
         descriptor = os.open(path, flags, 0o600)
         # A single append write prevents records from being interleaved by
         # independent runners sharing this JSONL file.  Partial writes are
@@ -151,8 +195,11 @@ def append_event(path: Path, payload: dict[str, Any]) -> None:
         finally:
             os.close(descriptor)
     finally:
+        if lock_descriptor is not None:
+            os.close(lock_descriptor)
         try:
-            lock_path.unlink()
+            if lock_path.read_text(encoding="ascii") == lock_token:
+                lock_path.unlink()
         except FileNotFoundError:
             pass
 
@@ -320,10 +367,19 @@ def _acquire_run_lock(path: Path, run_id: str, stale_after: float) -> dict[str, 
             owner_dead = _lock_owner_pid_dead(path)
             if age < stale_after and not owner_dead:
                 return {"acquired": False, "path": str(path.resolve()), "reclaimed": False, "age_seconds": round(age, 3)}
+            # Never leave an old owner able to delete the successor's lock in
+            # its finally block.  Quarantine the stale inode under a unique
+            # name, then retry acquisition of the canonical path.
+            stale_path = path.with_name(f".{path.name}.reclaimed.{uuid.uuid4().hex}")
             try:
-                path.unlink()
+                os.replace(path, stale_path)
             except FileNotFoundError:
                 pass
+            else:
+                try:
+                    stale_path.unlink()
+                except FileNotFoundError:
+                    pass
             reclaimed_age = age
             reclaimed_reason = "owner_pid_dead" if owner_dead else "age_exceeded"
             continue
@@ -346,7 +402,7 @@ def _terminate_process_tree(child: subprocess.Popen[bytes]) -> dict[str, Any]:
         return result
     try:
         if os.name == "nt":
-            completed = subprocess.run(["taskkill", "/PID", str(child.pid), "/T", "/F"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=10, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0)
+            completed = subprocess.run(["taskkill", "/PID", str(child.pid), "/T", "/F"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False, timeout=10, creationflags=CREATE_NO_WINDOW)
             result["taskkill_exit_code"] = completed.returncode
         else:
             os.killpg(child.pid, signal.SIGKILL)
@@ -386,6 +442,11 @@ def _drain_redacted_output(child: subprocess.Popen[bytes], output: Any, sensitiv
         pending = b""
         try:
             assert child.stdout is not None
+            # Keep every byte that could be persisted plus a look-ahead suffix
+            # in one redaction operation.  Redacting a prefix independently
+            # from its retained suffix leaked known secrets split at that
+            # boundary.  Memory remains bounded by the configured output cap.
+            retained_limit = max_output_bytes + suffix
             while True:
                 # Use the raw pipe rather than BufferedReader.read(): on
                 # Windows the latter may wait for its requested buffer size
@@ -393,10 +454,10 @@ def _drain_redacted_output(child: subprocess.Popen[bytes], output: Any, sensitiv
                 chunk = child.stdout.raw.read(65536)
                 if not chunk:
                     break
-                pending += chunk
-                if len(pending) > suffix:
-                    write_redacted(pending[:-suffix])
-                    pending = pending[-suffix:]
+                if len(pending) < retained_limit:
+                    pending += chunk[:retained_limit - len(pending)]
+                if len(pending) >= retained_limit:
+                    state["truncated"] = True
             write_redacted(pending)
         except (OSError, ValueError) as exc:
             state["error"] = exc
@@ -418,7 +479,7 @@ def run(args: argparse.Namespace) -> int:
         record = _base_record(args, run_id, started_at, sensitive_values)
     except (ValueError, OSError, ToolsProvenanceError) as exc:
         finished = _configuration_failure_record(args, run_id, started_at, started_monotonic, exc, sensitive_values)
-        write_heartbeat(Path(args.heartbeat), finished)
+        write_heartbeat(attempt_heartbeat_path(Path(args.heartbeat), run_id, "failed"), finished)
         append_event(Path(args.event_log), finished)
         return 3
     heartbeat = Path(args.heartbeat)
@@ -429,7 +490,7 @@ def run(args: argparse.Namespace) -> int:
 
     if not cwd.is_dir():
         finished = _finish(record, "FAILED", 3, started_monotonic, f"working directory does not exist: {cwd}", sensitive_values)
-        write_heartbeat(heartbeat, finished)
+        write_heartbeat(attempt_heartbeat_path(heartbeat, run_id, "failed"), finished)
         append_event(event_log, finished)
         return 3
 
@@ -437,12 +498,12 @@ def run(args: argparse.Namespace) -> int:
     record["lock"] = lock
     if not lock["acquired"]:
         finished = _finish(record, "SKIPPED", 4, started_monotonic, f"another instance holds lock: {lock_path}", sensitive_values)
-        write_heartbeat(skipped_heartbeat_path(heartbeat), finished)
+        write_heartbeat(skipped_heartbeat_path(heartbeat, run_id), finished)
         append_event(event_log, finished)
         return 4
 
     try:
-        write_heartbeat(heartbeat, record)
+        _write_owned_heartbeat(heartbeat, lock_path, record["run_id"], record)
         log_path.parent.mkdir(parents=True, exist_ok=True)
         environment = os.environ.copy()
         environment.setdefault("PYTHONDONTWRITEBYTECODE", "1")
@@ -459,7 +520,7 @@ def run(args: argparse.Namespace) -> int:
                     # PIPE e drenado, entao nada de saida se perde.
                     popen_options["creationflags"] = (
                         getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-                        | getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000))
+                        | getattr(subprocess, "CREATE_NO_WINDOW", CREATE_NO_WINDOW))
                 else:
                     popen_options["start_new_session"] = True
                 child = subprocess.Popen(args.command, **popen_options)
@@ -505,14 +566,11 @@ def run(args: argparse.Namespace) -> int:
             except OSError as exc:
                 finished = _finish(record, "FAILED", 3, started_monotonic, str(exc), sensitive_values)
             output.write(f"{finished['finished_at_utc']} {finished['status']} exit={finished['exit_code']}\n")
-        write_heartbeat(heartbeat, finished)
+        _write_owned_heartbeat(heartbeat, lock_path, record["run_id"], finished)
         append_event(event_log, finished)
         return int(finished["exit_code"])
     finally:
-        try:
-            lock_path.unlink()
-        except FileNotFoundError:
-            pass
+        _release_run_lock(lock_path, record["run_id"])
 
 
 def build_parser() -> argparse.ArgumentParser:

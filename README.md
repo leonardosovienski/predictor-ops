@@ -14,7 +14,8 @@ heartbeat and operational JSONL record. Existing invocations remain valid;
 new optional flags are `--provenance-mode {strict,permissive}` and
 `--consumer-provenance-json '{...}'`. Strict is the default and rejects an
 unidentifiable, dirty, or manifest-mismatched tools checkout. Permissive mode
-must be explicitly requested and reports the real dirty state for diagnostic
+must be explicitly requested and reports `identity_status`, `manifest_matches`,
+and the real dirty state for diagnostic
 compatibility. Historical artifacts are never rewritten.
 
 Since 1.2.0, strict setup failures are published as terminal failed records,
@@ -31,7 +32,8 @@ belongs exclusively to the lock owner.
 
 `ecosystem_health.py` loads its task list from the workspace-level
 `HEALTH_TASKS.json`; callers may pass a separate declarative file through
-`--tasks-file`. Run
+`--tasks-file`. Each task may declare an explicit `heartbeat_path`; the legacy
+path derivation remains a compatibility fallback. Run
 `python tools/release_check.py` from the workspace root to verify workspace
 tests, a clean isolated clone, and strict clone provenance before a release.
 The CI job installs test-only coverage tooling and requires at least 80% line

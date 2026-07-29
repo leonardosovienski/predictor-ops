@@ -14,6 +14,11 @@ import subprocess
 import sys
 from typing import Any
 
+try:
+    from tools._win32_compat import CREATE_NO_WINDOW
+except ModuleNotFoundError:
+    from _win32_compat import CREATE_NO_WINDOW  # type: ignore[no-redef]
+
 # `pythonw.exe` — o executavel de TODA tarefa agendada deste ecossistema — nao
 # tem console. Um processo de CONSOLE lancado a partir dele ganha um console
 # PROPRIO E VISIVEL: janela preta piscando na tela do dono. Este modulo chama
@@ -21,7 +26,7 @@ from typing import Any
 # rev-parse, status e ls-files: ~38 janelas por invocacao do runner, de hora em
 # hora. CREATE_NO_WINDOW impede sem esconder nada — toda saida aqui ja e
 # capturada. Vale 0 fora do Windows, onde o conceito nao existe.
-NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
+NO_WINDOW = CREATE_NO_WINDOW
 
 MANIFEST_NAME = "TOOLS_MANIFEST.json"
 SCHEMA_VERSION = "1.0"
@@ -144,12 +149,21 @@ def collect_tools_provenance(root: Path | None = None, *, strict: bool = True) -
         raise ToolsProvenanceError("manifest content_hash is invalid")
     if strict and not clean:
         raise ToolsProvenanceError("tools working tree is dirty in strict provenance mode")
-    if strict and computed != expected:
+    manifest_matches = computed == expected
+    if strict and not manifest_matches:
         raise ToolsProvenanceError("tools content_hash diverges from release manifest")
+    validation_errors = []
+    if not clean:
+        validation_errors.append("working tree is dirty")
+    if not manifest_matches:
+        validation_errors.append("content_hash diverges from release manifest")
     return {
         "version": version,
         "commit": commit,
         "content_hash": computed,
         "worktree_clean": clean,
+        "manifest_matches": manifest_matches,
+        "identity_status": "VALIDATED" if clean and manifest_matches else "DIRTY" if not clean else "MANIFEST_MISMATCH",
+        "validation_errors": validation_errors,
         "generated_at_utc": utc_now(),
     }

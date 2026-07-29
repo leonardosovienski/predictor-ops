@@ -35,9 +35,10 @@ import subprocess
 import sys
 from typing import Sequence
 
-# subprocess.CREATE_NO_WINDOW so existe no Windows; o literal mantem o modulo
-# importavel (e testavel) em qualquer plataforma.
-CREATE_NO_WINDOW = 0x08000000
+try:
+    from tools._win32_compat import CREATE_NO_WINDOW
+except ModuleNotFoundError:
+    from _win32_compat import CREATE_NO_WINDOW  # type: ignore[no-redef]
 
 CONFIGURATION_ERROR = 3
 

@@ -2,6 +2,12 @@
 
 ## Estado compartilhado final — 2026-07-25
 
+> **Escopo documental:** este checkout standalone não inclui
+> `FINAL_FORENSIC_REVIEW.md`, `PENDENCIAS_ABERTAS.md`, runbooks ou documentos
+> de segurança do workspace. As referências históricas abaixo não são fontes
+> verificáveis desta release; o código, `README.md`, `PROVENANCE.md`, `VERSION`
+> e `TOOLS_MANIFEST.json` são a fonte local de verdade.
+
 ### COLLECTION_ONLY
 
 As quatro tarefas operacionais usam exclusivamente `operational_runner.py`, com `--provenance-mode strict`, lock, timeout, redação de segredos, heartbeat atômico e event log:
@@ -49,13 +55,13 @@ a lista de não-objetivos completa.
 ## 3. Estado atual
 
 8 módulos Python + 2 scripts PowerShell, 100% stdlib (`pyproject.toml` declara `dependencies = []`),
-**139 testes passed, 1 skipped** (verificado 2026-07-20).
+**141 testes passed, 1 skipped** (evidência histórica em 2026-07-25).
 `TOOLS_MANIFEST.json` em sincronia (`--check` retorna OK). API pública
 documentada em `README.md`. Nenhum bug de código conhecido em aberto.
 
 ## 4. Branch, versão e commit-base
 
-Branch atual `main`. `VERSION` e `pyproject.toml` = `1.3.2`.
+Branch atual `main`. `VERSION` e `pyproject.toml` = `1.3.4`.
 
 ## 5. Estado Git
 

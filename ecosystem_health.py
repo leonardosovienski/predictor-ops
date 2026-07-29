@@ -8,35 +8,60 @@ from pathlib import Path
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable
+from typing import Any, Callable, NamedTuple
 
-sys.dont_write_bytecode = True
+try:
+    from tools._win32_compat import CREATE_NO_WINDOW
+except ModuleNotFoundError:
+    from _win32_compat import CREATE_NO_WINDOW  # type: ignore[no-redef]
+
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_TASKS_FILE = ROOT / "HEALTH_TASKS.json"
 
 
-def load_tasks(path: Path = DEFAULT_TASKS_FILE) -> tuple[tuple[str, str, bool, int], ...]:
+class HealthTask(NamedTuple):
+    task_name: str
+    project: str
+    expected_enabled: bool
+    max_age_hours: int
+    heartbeat_file: Path | None = None
+
+
+def _as_task(value: HealthTask | tuple[str, str, bool, int]) -> HealthTask:
+    return value if isinstance(value, HealthTask) else HealthTask(*value)
+
+
+def load_tasks(path: Path = DEFAULT_TASKS_FILE) -> tuple[HealthTask, ...]:
     """Load declarative task metadata; no domain rules are interpreted here."""
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, list):
         raise ValueError("health task configuration must be a JSON array")
-    tasks: list[tuple[str, str, bool, int]] = []
+    tasks: list[HealthTask] = []
     for item in value:
         if not isinstance(item, dict):
             raise ValueError("each health task must be a JSON object")
         name, project, enabled, max_age = item.get("task_name"), item.get("project"), item.get("expected_enabled"), item.get("max_age_hours")
+        configured_path = item.get("heartbeat_path")
         if not isinstance(name, str) or not name or not isinstance(project, str) or not project or not isinstance(enabled, bool) or not isinstance(max_age, int) or max_age <= 0:
             raise ValueError("health task has invalid task_name, project, expected_enabled, or max_age_hours")
-        tasks.append((name, project, enabled, max_age))
+        if configured_path is not None and (not isinstance(configured_path, str) or not configured_path):
+            raise ValueError("health task heartbeat_path must be a non-empty string when supplied")
+        expanded = Path(os.path.expandvars(configured_path)).expanduser() if configured_path else None
+        tasks.append(HealthTask(name, project, enabled, max_age, expanded))
     return tuple(tasks)
 
 
 # Kept empty in the standalone repository.  Workspace configuration is loaded
 # lazily so isolated utility tests remain independent of domain task metadata.
-TASKS: tuple[tuple[str, str, bool, int], ...] = ()
+TASKS: tuple[HealthTask | tuple[str, str, bool, int], ...] = ()
 
 
-def heartbeat_path(task_name: str, project: str) -> Path:
+def heartbeat_path(task_name: str | HealthTask, project: str | None = None) -> Path:
+    if isinstance(task_name, HealthTask):
+        if task_name.heartbeat_file is not None:
+            return task_name.heartbeat_file
+        project, task_name = task_name.project, task_name.task_name
+    assert project is not None
     if task_name.endswith("-archival-collection"):
         runtime = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "predictor-tools" / "runtime"
         return runtime / project / task_name / f"{task_name}.heartbeat.json"
@@ -62,7 +87,7 @@ def query_task(task_name: str) -> dict[str, Any] | None:
     )
     # creationflags: sob pythonw.exe (toda tarefa agendada) nao ha console, e
     # este powershell.exe abriria uma janela visivel. Saida ja capturada.
-    result = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script], capture_output=True, text=True, timeout=15, check=False, creationflags=0x08000000 if sys.platform == "win32" else 0)
+    result = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script], capture_output=True, text=True, timeout=15, check=False, creationflags=CREATE_NO_WINDOW)
     if result.returncode != 0:
         return None
     value = json.loads(result.stdout)
@@ -78,8 +103,8 @@ def _parse_time(value: str | None) -> datetime | None:
         return None
 
 
-def assess_task(task_name: str, project: str, expected_enabled: bool, max_age_hours: int, task: dict[str, Any] | None, heartbeat: dict[str, Any] | None, now: datetime) -> dict[str, Any]:
-    item: dict[str, Any] = {"task_name": task_name, "project": project, "expected_enabled": expected_enabled, "heartbeat_path": str(heartbeat_path(task_name, project))}
+def assess_task(task_name: str, project: str, expected_enabled: bool, max_age_hours: int, task: dict[str, Any] | None, heartbeat: dict[str, Any] | None, now: datetime, heartbeat_file: Path | None = None) -> dict[str, Any]:
+    item: dict[str, Any] = {"task_name": task_name, "project": project, "expected_enabled": expected_enabled, "heartbeat_path": str(heartbeat_file or heartbeat_path(task_name, project))}
     if task is None:
         item.update(status="UNKNOWN", reason="Task Scheduler task not queryable")
         return item
@@ -131,10 +156,16 @@ def load_heartbeat(path: Path) -> dict[str, Any] | None:
         return None
 
 
-def health_report(provider: Callable[[str], dict[str, Any] | None] = query_task, now: datetime | None = None, tasks: tuple[tuple[str, str, bool, int], ...] | None = None) -> dict[str, Any]:
+def health_report(provider: Callable[[str], dict[str, Any] | None] = query_task, now: datetime | None = None, tasks: tuple[HealthTask | tuple[str, str, bool, int], ...] | None = None) -> dict[str, Any]:
     checked_at = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     tasks = (TASKS or load_tasks()) if tasks is None else tasks
-    entries = [assess_task(name, project, enabled, hours, provider(name), load_heartbeat(heartbeat_path(name, project)), checked_at) for name, project, enabled, hours in tasks]
+    entries = []
+    for raw_task in tasks:
+        configured = _as_task(raw_task)
+        path = heartbeat_path(configured)
+        entries.append(assess_task(configured.task_name, configured.project, configured.expected_enabled,
+                                   configured.max_age_hours, provider(configured.task_name),
+                                   load_heartbeat(path), checked_at, path))
     statuses = {entry["status"] for entry in entries}
     if "FAILED" in statuses or "PARTIAL" in statuses:
         code, overall = 1, "FAILED"

@@ -57,7 +57,7 @@ def test_lock_skips_second_instance(tmp_path: Path) -> None:
     code, _, actual_heartbeat, events = invoke(tmp_path, [sys.executable, "-c", "raise SystemExit(0)"])
     assert code == 4
     assert actual_heartbeat == heartbeat
-    sidecar = runner.skipped_heartbeat_path(heartbeat)
+    sidecar = next(tmp_path.glob("heartbeat.skipped.*.json"))
     assert read_heartbeat(sidecar)["status"] == "SKIPPED"
     assert json.loads(events.read_text(encoding="utf-8"))["status"] == "SKIPPED"
 
@@ -74,7 +74,7 @@ def test_lock_loser_never_touches_winner_heartbeat(tmp_path: Path) -> None:
     code, _, _, _ = invoke(tmp_path, [sys.executable, "-c", "raise SystemExit(0)"])
     assert code == 4
     assert read_heartbeat(heartbeat) == winner_record
-    assert read_heartbeat(runner.skipped_heartbeat_path(heartbeat))["status"] == "SKIPPED"
+    assert read_heartbeat(next(tmp_path.glob("heartbeat.skipped.*.json")))["status"] == "SKIPPED"
 
 
 def test_missing_expected_artifact_is_partial(tmp_path: Path) -> None:
@@ -108,7 +108,8 @@ def test_consumer_source_unavailable_status_reaches_heartbeat(tmp_path: Path) ->
 def test_invalid_working_directory_is_observable(tmp_path: Path) -> None:
     log, heartbeat, events = tmp_path / "x.log", tmp_path / "x.json", tmp_path / "x.jsonl"
     code = runner.main(["run", "--task", "bad", "--project", "test", "--cwd", str(tmp_path / "absent"), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--provenance-mode", "permissive", "--", sys.executable, "-c", "pass"])
-    assert code == 3 and read_heartbeat(heartbeat)["status"] == "FAILED"
+    assert code == 3 and not heartbeat.exists()
+    assert read_heartbeat(next(tmp_path.glob("x.failed.*.json")))["status"] == "FAILED"
 
 
 def test_missing_child_script_is_observable(tmp_path: Path) -> None:
@@ -174,8 +175,9 @@ def test_strict_setup_failure_is_published_as_a_failed_operational_record(tmp_pa
     monkeypatch.setattr(runner, "collect_tools_provenance", lambda **_: (_ for _ in ()).throw(runner.ToolsProvenanceError("manifest invalid")))
     log, heartbeat, events = tmp_path / "human.log", tmp_path / "heartbeat.json", tmp_path / "events.jsonl"
     code = runner.main(["run", "--task", "strict", "--project", "test", "--cwd", str(tmp_path), "--log", str(log), "--heartbeat", str(heartbeat), "--event-log", str(events), "--", sys.executable, "-c", "pass"])
-    record = read_heartbeat(heartbeat)
-    assert code == 3 and record["status"] == "FAILED"
+    assert code == 3 and not heartbeat.exists()
+    record = read_heartbeat(next(tmp_path.glob("heartbeat.failed.*.json")))
+    assert record["status"] == "FAILED"
     assert record["tools_provenance"]["status"] == "UNAVAILABLE"
     assert json.loads(events.read_text(encoding="utf-8"))["exit_code"] == 3
 

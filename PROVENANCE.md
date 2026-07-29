@@ -28,7 +28,8 @@ configuration-error code (`3`) before launching the child when `VERSION`, Git
 identity, manifest, included files, or release fingerprint cannot be
 validated, or when the tools checkout is dirty. `--provenance-mode permissive`
 is an explicit diagnostic compatibility mode: it preserves the actual computed
-hash and `worktree_clean: false` instead of representing a dirty checkout as a
+hash and reports `identity_status`, `manifest_matches`, and validation errors
+instead of representing a dirty checkout as a
 release artifact. A strict setup failure is still published as a terminal
 `FAILED` heartbeat and JSONL event with `tools_provenance.status` equal to
 `UNAVAILABLE`; it never launches the child or claims a validated release.

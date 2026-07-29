@@ -1,6 +1,7 @@
 """Read-only release verification for the standalone ``tools`` repository."""
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 import subprocess
@@ -18,9 +19,14 @@ def _run(command: list[str], cwd: Path) -> None:
         raise RuntimeError(f"verification command failed ({completed.returncode}): {' '.join(command)}")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Verify tools in its workspace and an isolated clone.")
+    parser.add_argument("--workspace", type=Path, default=WORKSPACE,
+                        help="workspace containing the tools checkout (default: parent of this file)")
+    args = parser.parse_args([] if argv is None else argv)
+    workspace = args.workspace.resolve()
     try:
-        _run([sys.executable, "-m", "pytest", "tools/tests", "-q"], WORKSPACE)
+        _run([sys.executable, "-m", "pytest", "tools/tests", "-q"], workspace)
         with tempfile.TemporaryDirectory(prefix="tools-release-check-") as temporary:
             base, clone = Path(temporary), Path(temporary) / "tools"
             _run(["git", "clone", "--quiet", str(ROOT), str(clone)], ROOT)
@@ -39,4 +45,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

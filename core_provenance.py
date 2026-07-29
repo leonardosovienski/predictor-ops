@@ -13,13 +13,17 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib
 import json
 import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Iterable
+
+try:
+    from tools._win32_compat import CREATE_NO_WINDOW
+except ModuleNotFoundError:
+    from _win32_compat import CREATE_NO_WINDOW  # type: ignore[no-redef]
 
 try:  # Bare-script form first (matches this repo's own test/script convention);
     # falls back to the `tools.X` package form for external consumers (found
@@ -181,50 +185,6 @@ def verify_core_provenance(expected_core_root: Path, module: Any | None = None, 
     return result
 
 
-_PROBE = r'''
-import importlib
-import json
-import os
-import runpy
-import sys
-
-request = json.loads(os.environ["CORE_PROVENANCE_REQUEST"])
-consumer_root = request["consumer_root"]
-vendor_root = request["vendor_root"]
-mode = request["mode"]
-if mode == "vendor":
-    # Python resolves a package from the directory that *contains* it, not from
-    # the package directory itself.
-    sys.path.insert(0, os.path.dirname(vendor_root))
-elif mode in {"script", "module"}:
-    sys.path.insert(0, consumer_root)
-
-run_error = None
-exit_code = None
-try:
-    if mode == "script":
-        sys.argv = [request["script"], "--help"]
-        runpy.run_path(request["script"], run_name="__main__")
-    elif mode == "module":
-        sys.argv = [request["module"], "--help"]
-        runpy.run_module(request["module"], run_name="__main__")
-    else:
-        importlib.import_module("predictor_core")
-except SystemExit as exc:
-    exit_code = int(exc.code) if isinstance(exc.code, int) else 1
-except BaseException as exc:
-    run_error = f"{type(exc).__name__}: {exc}"
-
-module = sys.modules.get("predictor_core")
-print(json.dumps({
-    "run_error": run_error,
-    "entrypoint_exit_code": exit_code,
-    "module_file": getattr(module, "__file__", None),
-    "sys_path": sys.path,
-}, ensure_ascii=False, sort_keys=True))
-'''
-
-
 def _probe_consumer(consumer_root: Path, vendor_root: Path, *, mode: str, script: str | None, module: str | None, timeout: float) -> dict[str, Any]:
     request = {
         "consumer_root": str(consumer_root.resolve()),
@@ -239,7 +199,7 @@ def _probe_consumer(consumer_root: Path, vendor_root: Path, *, mode: str, script
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     try:
         completed = subprocess.run(
-            [sys.executable, "-c", _PROBE],
+            [sys.executable, str(Path(__file__).with_name("_core_provenance_probe.py"))],
             cwd=consumer_root,
             env=env,
             text=True,
@@ -249,7 +209,7 @@ def _probe_consumer(consumer_root: Path, vendor_root: Path, *, mode: str, script
             # A sonda roda sob pythonw.exe nas tarefas agendadas, que nao tem
             # console: sem isto o Python filho abre uma janela visivel a cada
             # disparo. A saida ja e capturada.
-            creationflags=0x08000000 if sys.platform == "win32" else 0,
+            creationflags=CREATE_NO_WINDOW,
         )
     except subprocess.TimeoutExpired:
         return {"error": f"probe timed out after {timeout:g}s"}

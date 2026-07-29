@@ -28,18 +28,34 @@ TOOLS_ROOT = Path(__file__).resolve().parents[1]
 _DUAL_IMPORT_MODULES = ("core_provenance", "operational_runner", "release_manifest")
 
 
-def _has_module_level_global_statement(source: str) -> bool:
+def _has_module_level_mutable_state(source: str) -> bool:
     """True se alguma função no módulo declara `global <nome>` — o sinal de
     estado mutável em nível de módulo que o split-brain poderia divergir."""
     tree = ast.parse(source)
-    return any(isinstance(node, ast.Global) for node in ast.walk(tree))
+    if any(isinstance(node, ast.Global) for node in ast.walk(tree)):
+        return True
+    mutable_calls = {"cache", "lru_cache", "cached_property", "defaultdict"}
+    for node in tree.body:
+        value = node.value if isinstance(node, (ast.Assign, ast.AnnAssign)) else None
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(node, ast.AnnAssign) else []
+        names = [target.id for target in targets if isinstance(target, ast.Name)]
+        # UPPER_CASE tables are declarative constants in these modules. A
+        # mutable object intended for runtime state must have a non-constant
+        # name and is therefore caught below.
+        if names and all(name.isupper() for name in names):
+            continue
+        if isinstance(value, (ast.Dict, ast.List, ast.Set)):
+            return True
+        if isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id in mutable_calls:
+            return True
+    return False
 
 
 def test_modulos_com_fallback_flat_package_nao_tem_estado_mutavel_de_modulo():
     offenders = []
     for name in _DUAL_IMPORT_MODULES:
         source = (TOOLS_ROOT / f"{name}.py").read_text(encoding="utf-8")
-        if _has_module_level_global_statement(source):
+        if _has_module_level_mutable_state(source):
             offenders.append(name)
     assert offenders == [], (
         f"{offenders} agora tem `global` (estado mutável de módulo) e também "
