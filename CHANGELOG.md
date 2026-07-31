@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Ship `HEALTH_TASKS.example.json` and document it. `ecosystem_health.py`
+  reads its task list from the workspace root, one level above this checkout,
+  so no repository versions it: a fresh workspace has none and the tool exits
+  `CONFIGURATION_ERROR`. The example lists the task names the domains actually
+  declare (`brasileirao-sombra-manha/noite`, `cs-ratings-semanal`,
+  `lol-ratings-semanal`); `expected_enabled` and `max_age_hours` stay operator
+  policy and are documented as such in the README.
+
 - Make the operational-entrypoint contract tests runnable off Windows. Both
   `test_cs_operational_entrypoint` and `test_lol_operational_entrypoint`
   asserted `.endswith("data\\ratings.json")`, hardcoding the Windows path

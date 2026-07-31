@@ -1,0 +1,26 @@
+[
+  {
+    "task_name": "brasileirao-sombra-manha",
+    "project": "brasileirao-predictor",
+    "expected_enabled": true,
+    "max_age_hours": 26
+  },
+  {
+    "task_name": "brasileirao-sombra-noite",
+    "project": "brasileirao-predictor",
+    "expected_enabled": true,
+    "max_age_hours": 26
+  },
+  {
+    "task_name": "cs-ratings-semanal",
+    "project": "cs-predictor",
+    "expected_enabled": true,
+    "max_age_hours": 194
+  },
+  {
+    "task_name": "lol-ratings-semanal",
+    "project": "lol-predictor",
+    "expected_enabled": true,
+    "max_age_hours": 194
+  }
+]

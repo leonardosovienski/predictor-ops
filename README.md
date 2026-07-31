@@ -33,7 +33,23 @@ belongs exclusively to the lock owner.
 `ecosystem_health.py` loads its task list from the workspace-level
 `HEALTH_TASKS.json`; callers may pass a separate declarative file through
 `--tasks-file`. Each task may declare an explicit `heartbeat_path`; the legacy
-path derivation remains a compatibility fallback. Run
+path derivation remains a compatibility fallback.
+
+That file lives at the **workspace root**, one level above this checkout, so no
+repository versions it -- a fresh workspace has none and `ecosystem_health.py`
+exits `CONFIGURATION_ERROR`. `HEALTH_TASKS.example.json` here is a starting
+point listing the task names the domains actually declare; copy it up and
+adjust:
+
+    cp tools/HEALTH_TASKS.example.json ../HEALTH_TASKS.json
+
+`expected_enabled` and `max_age_hours` are operational policy, not facts
+derivable from the repositories -- the example assumes every task should be
+enabled, with a tolerance slightly wider than each cadence (26h for the daily
+shadow runs, 194h for the weekly ratings refreshes) so one late run does not
+raise a false alarm. Tighten or loosen it to match what you actually schedule.
+
+Run
 `python tools/release_check.py` from the workspace root to verify workspace
 tests, a clean isolated clone, and strict clone provenance before a release.
 The CI job installs test-only coverage tooling and requires at least 80% line
