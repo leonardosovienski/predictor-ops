@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Fix `vendor_byte_audit.py` reporting `MANIFEST_MISMATCH` for a vendor tree
+  that is byte-for-byte identical to the canonical core.  The aggregate was
+  recomputed as `sha256(...).hexdigest()[:16]`, the truncated form used by
+  `sync_core` before predictor_core 2.0.0; that release moved the manifest
+  aggregate to the full SHA-256 and the audit was never updated.  Both call
+  sites (`aggregate()` and the declared-hash recomputation) now use the full
+  digest, so a synced consumer reports `IDENTICAL` and exit code 0 instead of
+  two spurious `manifest_issues`.
+
+  Observed on 2026-07-31 against cripto-predictor and brasileirao-predictor
+  freshly synced from core 2.0.1: `files=47/47 identical=47 changed=0` and
+  still `MANIFEST_MISMATCH` -- the audit contradicted its own file comparison.
+
 - Stop the gate monitor from reporting a declared scientific closure as a
   probe error.  A gate probe that exits non-zero while emitting parseable
   output declaring a terminal state (today only `CLOSED_BY_HUMAN_DECISION`)

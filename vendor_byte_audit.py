@@ -116,7 +116,7 @@ def aggregate(entries: dict[str, PayloadEntry]) -> str | None:
     if any(entry.kind != "file" or entry.sha256 is None for entry in entries.values()):
         return None
     file_hashes = {name: entry.sha256 for name, entry in entries.items()}
-    return hashlib.sha256(json.dumps(file_hashes, sort_keys=True).encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(json.dumps(file_hashes, sort_keys=True).encode("utf-8")).hexdigest()
 
 
 def _bom_name(data: bytes) -> str | None:
@@ -181,7 +181,7 @@ def _manifest_issues(manifest: dict[str, Any] | None, actual: dict[str, PayloadE
     declared_aggregate = manifest["aggregate"]
     if not isinstance(manifest.get("source_version"), str):
         issues.append("manifest source_version is missing or invalid")
-    recomputed_declared = hashlib.sha256(json.dumps(declared_files, sort_keys=True).encode("utf-8")).hexdigest()[:16]
+    recomputed_declared = hashlib.sha256(json.dumps(declared_files, sort_keys=True).encode("utf-8")).hexdigest()
     if declared_aggregate != recomputed_declared:
         issues.append("manifest aggregate does not match declared file hashes")
     if declared_files != actual_hashes:
