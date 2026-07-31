@@ -25,7 +25,9 @@ def test_entrypoint_uses_the_shared_operational_contract(monkeypatch) -> None:
     assert entrypoint.main([]) == 5
     command = seen[0]
     assert command[command.index("--task") + 1] == "cs-ratings-semanal"
-    assert command[command.index("--expected-artifact") + 1].endswith("data\\ratings.json")
+    # Compara COMPONENTES do caminho, não a string: "data\\ratings.json" fixava
+    # o separador do Windows e o teste era impossível em qualquer runner POSIX.
+    assert Path(command[command.index("--expected-artifact") + 1]).parts[-2:] == ("data", "ratings.json")
     assert command[command.index("--timeout") + 1] == "9000"
 
 

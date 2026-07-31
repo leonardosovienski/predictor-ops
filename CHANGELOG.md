@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+- Ship `HEALTH_TASKS.example.json` and document it. `ecosystem_health.py`
+  reads its task list from the workspace root, one level above this checkout,
+  so no repository versions it: a fresh workspace has none and the tool exits
+  `CONFIGURATION_ERROR`. The example lists the task names the domains actually
+  declare (`brasileirao-sombra-manha/noite`, `cs-ratings-semanal`,
+  `lol-ratings-semanal`); `expected_enabled` and `max_age_hours` stay operator
+  policy and are documented as such in the README.
+
+- Make the operational-entrypoint contract tests runnable off Windows. Both
+  `test_cs_operational_entrypoint` and `test_lol_operational_entrypoint`
+  asserted `.endswith("data\\ratings.json")`, hardcoding the Windows path
+  separator, so they could never pass on a POSIX checkout. They now compare
+  path *components* (`Path(...).parts[-2:] == ("data", "ratings.json")`),
+  asserting the same thing on either platform.
+
+- Skip the two lol entrypoint tests when the lol-predictor runtime artifacts
+  are absent, instead of failing. `atualiza_semanal.py` aborts in its
+  provenance guard without all four of `runtime_manifest.ARTIFACTS`, and those
+  are gitignored ingestion output.
+
+  These are deliberately NOT covered by a synthetic seed the way f1-predictor
+  and brasileirao-predictor are. `data/calibration.json` is not an inert
+  artifact -- it is a mode switch: `src/model.py::_kills_calibration` falls back
+  to the config.yaml global baseline when the file is absent, but starts
+  *requiring* `--kills-league` once it exists. A fabricated calibration.json
+  breaks 9 real tests in lol-predictor itself (verified). A fixture must not
+  change production semantics to accommodate itself.
+
 - Fix `vendor_byte_audit.py` reporting `MANIFEST_MISMATCH` for a vendor tree
   that is byte-for-byte identical to the canonical core.  The aggregate was
   recomputed as `sha256(...).hexdigest()[:16]`, the truncated form used by

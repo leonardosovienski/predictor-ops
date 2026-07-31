@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "tools_version": "1.3.5",
-  "content_hash": "bd445e0afd9baecb5810704ad8df48f6ca32683db30d4ef4959321e3b07eb396",
+  "tools_version": "1.3.6",
+  "content_hash": "91117a4241761d6e33a0691652e528b101eb724af946fb0e0be99f92cc2ec95c",
   "hash_algorithm": "sha256-path-nul-content-nul-v1",
   "included_files": [
     ".github/workflows/cd-sync.yml",
@@ -9,6 +9,7 @@
     ".gitignore",
     "CHANGELOG.md",
     "HANDOFF.md",
+    "HEALTH_TASKS.example.json",
     "PROVENANCE.md",
     "README.md",
     "_core_provenance_probe.py",
@@ -50,5 +51,5 @@
     "VERSION"
   ],
   "release_commit": null,
-  "generated_at_utc": "2026-07-31T17:15:57Z"
+  "generated_at_utc": "2026-07-31T23:38:46Z"
 }
