@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- Make the operational-entrypoint contract tests runnable off Windows. Both
+  `test_cs_operational_entrypoint` and `test_lol_operational_entrypoint`
+  asserted `.endswith("data\\ratings.json")`, hardcoding the Windows path
+  separator, so they could never pass on a POSIX checkout. They now compare
+  path *components* (`Path(...).parts[-2:] == ("data", "ratings.json")`),
+  asserting the same thing on either platform.
+
+- Skip the two lol entrypoint tests when the lol-predictor runtime artifacts
+  are absent, instead of failing. `atualiza_semanal.py` aborts in its
+  provenance guard without all four of `runtime_manifest.ARTIFACTS`, and those
+  are gitignored ingestion output.
+
+  These are deliberately NOT covered by a synthetic seed the way f1-predictor
+  and brasileirao-predictor are. `data/calibration.json` is not an inert
+  artifact -- it is a mode switch: `src/model.py::_kills_calibration` falls back
+  to the config.yaml global baseline when the file is absent, but starts
+  *requiring* `--kills-league` once it exists. A fabricated calibration.json
+  breaks 9 real tests in lol-predictor itself (verified). A fixture must not
+  change production semantics to accommodate itself.
+
 - Fix `vendor_byte_audit.py` reporting `MANIFEST_MISMATCH` for a vendor tree
   that is byte-for-byte identical to the canonical core.  The aggregate was
   recomputed as `sha256(...).hexdigest()[:16]`, the truncated form used by

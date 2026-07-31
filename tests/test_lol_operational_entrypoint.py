@@ -11,6 +11,24 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# `atualiza_semanal.py` do lol aborta no guard de proveniência
+# (`runtime_manifest.ARTIFACTS`) se faltar qualquer um destes quatro artefatos
+# operacionais — que nascem da ingestão do Oracle's Elixir e são gitignored.
+#
+# Por que NÃO existe um seed sintético para eles, como há no f1 e no
+# brasileirao: `data/calibration.json` não é artefato inerte, é um INTERRUPTOR
+# DE MODO. `src/model.py::_kills_calibration` cai no baseline global do
+# config.yaml quando o arquivo está ausente, mas passa a EXIGIR `--kills-league`
+# quando ele existe. Criar um calibration.json de mentira derruba 9 testes reais
+# do próprio lol-predictor (test_model/test_predict) — verificado. Um fixture
+# não pode mudar a semântica de produção para se acomodar.
+_LOL_RUNTIME_ARTIFACTS = ("lol.db", "ratings.json", "calibration.json", "teams_lol.json")
+requires_lol_runtime_data = pytest.mark.skipif(
+    not all((ROOT / "lol-predictor" / "data" / name).is_file()
+            for name in _LOL_RUNTIME_ARTIFACTS),
+    reason="artefatos operacionais do lol-predictor ausentes (gitignored) e "
+           "insintetizáveis: um calibration.json sintético muda o modo do modelo")
+
 
 def load_module(name: str, filename: str):
     spec = importlib.util.spec_from_file_location(name, ROOT / "lol-predictor" / "scripts" / filename)
@@ -20,6 +38,7 @@ def load_module(name: str, filename: str):
     return module
 
 
+@requires_lol_runtime_data
 def test_entrypoint_uses_shared_operational_contract(monkeypatch) -> None:
     entrypoint = load_module("lol_entrypoint_contract", "atualiza_semanal.py")
     seen: list[list[str]] = []
@@ -27,7 +46,9 @@ def test_entrypoint_uses_shared_operational_contract(monkeypatch) -> None:
     assert entrypoint.main([]) == 5
     command = seen[0]
     assert command[command.index("--task") + 1] == "lol-ratings-semanal"
-    assert command[command.index("--expected-artifact") + 1].endswith("data\\ratings.json")
+    # Compara COMPONENTES do caminho, não a string: "data\\ratings.json" fixava
+    # o separador do Windows e o teste era impossível em qualquer runner POSIX.
+    assert Path(command[command.index("--expected-artifact") + 1]).parts[-2:] == ("data", "ratings.json")
     assert command[command.index("--timeout") + 1] == "9000"
     assert command[command.index("--partial-exit-code") + 1] == "10"
 
@@ -61,6 +82,7 @@ def test_payload_propagates_step_failure_and_redacts(tmp_path: Path, monkeypatch
     assert "fake_lol_secret_123" not in contents and "[REDACTED]" in contents
 
 
+@requires_lol_runtime_data
 def test_download_failure_with_fresh_artifact_is_partial(tmp_path: Path, monkeypatch) -> None:
     payload = load_module("lol_payload_partial", "atualiza_semanal_payload.py")
     payload.LOG = tmp_path / "refresh.log"
