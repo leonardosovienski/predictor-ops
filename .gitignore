@@ -7,6 +7,11 @@ __pycache__/
 *.heartbeat.json
 logs/
 *.lock
+!uv.lock
+dist/
+.venv/
+.ruff_cache/
+work/
 .env
 .env.*
 !*.env.example

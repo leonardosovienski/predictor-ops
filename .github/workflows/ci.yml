@@ -1,0 +1,98 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.13"
+          - os: windows-latest
+            python: "3.13"
+          - os: ubuntu-latest
+            python: "3.14"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.1"
+          enable-cache: true
+      - run: uv python install ${{ matrix.python }}
+      - run: uv sync --python ${{ matrix.python }} --all-extras
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pyright
+      - run: uv run python -W error::ResourceWarning -m pytest --cov --cov-report=term-missing
+      - if: runner.os == 'Windows'
+        run: uv run python -W error::ResourceWarning -m pytest windows_integration -q
+      - if: runner.os == 'Linux'
+        run: uv run python -W error::ResourceWarning -m pytest posix_integration -q
+      - if: runner.os == 'Linux' && matrix.python == '3.13'
+        run: uvx pip-audit
+      - if: runner.os == 'Linux' && matrix.python == '3.13'
+        shell: bash
+        run: |
+          uvx detect-secrets scan --only-verified --all-files --exclude-files 'uv.lock|dist/|.git/|.venv/' > /tmp/secrets.json
+          uv run python -c "import json; data=json.load(open('/tmp/secrets.json')); assert not data['results'], data['results']"
+      - run: uv build
+      - if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          isolated="$(mktemp -d)"
+          uv venv "$isolated/venv" --python "${{ matrix.python }}"
+          uv pip install --python "$isolated/venv" dist/*.whl
+          cd "$isolated"
+          "$isolated/venv/bin/predictor-ops" --version
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $isolated = Join-Path $env:RUNNER_TEMP "predictor-ops-smoke"
+          uv venv "$isolated\venv" --python "${{ matrix.python }}"
+          uv pip install --python "$isolated\venv" (Get-ChildItem dist\*.whl).FullName
+          Set-Location $isolated
+          & "$isolated\venv\Scripts\predictor-ops.exe" --version
+
+  redis-integration:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:8.2.1-alpine@sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.1"
+      - run: uv sync --extra redis --extra dev
+      - run: uv run python -W error::ResourceWarning -m pytest integration_tests -q
+        env:
+          PREDICTOR_OPS_TEST_REDIS_URL: redis://localhost:6379/15
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --tag predictor-ops:ci .
+      - run: docker run --rm --read-only --tmpfs /tmp predictor-ops:ci --version
+      - uses: anchore/sbom-action@v0
+        with:
+          image: predictor-ops:ci
+          artifact-name: predictor-ops.spdx.json
+      - uses: aquasecurity/trivy-action@0.30.0
+        with:
+          image-ref: predictor-ops:ci
+          severity: CRITICAL,HIGH
+          exit-code: "1"

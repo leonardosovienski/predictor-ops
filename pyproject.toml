@@ -1,21 +1,68 @@
-# Metadados declarativos apenas — este pacote não é instalado via pip.
-# Consumidores importam por sys.path (workspace-raiz na sys.path), não por
-# `pip install`; por isso não há [build-system]/backend declarado: adicionar
-# um sem nunca ter testado `pip install .` seria afirmar suporte não
-# verificado. Se isso mudar, adicionar [build-system] e validar a instalação
-# antes de declará-la.
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
 [project]
-name = "tools"
-version = "1.3.6"
-description = "Camada operacional canônica do ecossistema preditivo: runners, locks, provenance, redaction, manifests. Stdlib-only por design — nenhuma dependência externa."
+name = "predictor-ops"
+version = "2.0.1"
+description = "Portable operational runner for predictor workloads"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+license = {text = "MIT"}
+dependencies = [
+  "pydantic>=2.11,<3",
+  "pydantic-settings>=2.10,<3",
+]
+
+[project.optional-dependencies]
+redis = ["redis>=6,<8"]
+otel = [
+  "opentelemetry-api>=1.36,<2",
+  "opentelemetry-sdk>=1.36,<2",
+  "opentelemetry-exporter-otlp-proto-http>=1.36,<2",
+]
+dev = [
+  "build>=1.3",
+  "coverage[toml]>=7.10",
+  "fakeredis>=2.31",
+  "hatchling>=1.27",
+  "pre-commit>=4.3",
+  "pyright>=1.1.403",
+  "pytest>=8.4",
+  "pytest-cov>=6.2",
+  "pytest-timeout>=2.4",
+  "ruff>=0.12",
+]
+
+[project.scripts]
+predictor-ops = "predictor_ops.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/predictor_ops"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-# A raiz do workspace precisa estar na sys.path para `import tools.x` — e o
-# consumo desta camada e por sys.path, nao por `pip install`. Declarar aqui
-# torna a suite reproduzivel com `python -m pytest` puro; antes ela exigia
-# PYTHONPATH=<workspace> passado a mao, e sem ele 4 modulos nem coletavam.
-pythonpath = [".."]
+testpaths = ["tests_v2"]
+addopts = "-ra --strict-markers"
+timeout = 30
+
+[tool.coverage.run]
+source = ["predictor_ops"]
+branch = true
+omit = ["*/predictor_ops/__main__.py"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.pyright]
+include = ["src", "tests_v2"]
+pythonVersion = "3.13"
+typeCheckingMode = "standard"
+reportMissingImports = false

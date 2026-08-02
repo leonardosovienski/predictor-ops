@@ -1,0 +1,13 @@
+{
+  "schema_version": "1",
+  "jobs": [
+    {
+      "id": "example-collection",
+      "command": ["python", "-c", "print('collection complete')"],
+      "timeout_seconds": 300,
+      "heartbeat_interval_seconds": 10,
+      "runtime": {"backend": "local", "root": "/var/lib/predictor-ops"},
+      "provenance": {"domain": "example", "mode": "COLLECTION_ONLY"}
+    }
+  ]
+}
