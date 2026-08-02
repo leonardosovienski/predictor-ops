@@ -91,7 +91,7 @@ jobs:
         with:
           image: predictor-ops:ci
           artifact-name: predictor-ops.spdx.json
-      - uses: aquasecurity/trivy-action@0.30.0
+      - uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5 # v0.30.0
         with:
           image-ref: predictor-ops:ci
           severity: CRITICAL,HIGH
