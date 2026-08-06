@@ -1,0 +1,160 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and validate package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.1"
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --python 3.13 --all-extras
+
+      - name: Validate tag against project version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: python
+        run: |
+          import os
+          import pathlib
+          import tomllib
+
+          tag = os.environ["GITHUB_REF_NAME"]
+          expected_version = tag.removeprefix("v")
+
+          with pathlib.Path("pyproject.toml").open("rb") as file:
+              project = tomllib.load(file)
+
+          actual_version = project["project"]["version"]
+
+          if actual_version != expected_version:
+              raise SystemExit(
+                  f"Tag {tag!r} does not match pyproject.toml "
+                  f"version {actual_version!r}"
+              )
+
+          print(f"Release version validated: {actual_version}")
+
+      - name: Run Ruff
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Run Pyright
+        run: uv run pyright
+
+      - name: Run tests
+        run: |
+          uv run python -W error::ResourceWarning \
+            -m pytest \
+            --cov \
+            --cov-report=term-missing
+
+      - name: Audit dependencies
+        run: uvx pip-audit
+
+      - name: Build package
+        run: uv build
+
+      - name: Test wheel in isolated environment
+        shell: bash
+        run: |
+          isolated="$(mktemp -d)"
+
+          uv venv "$isolated/venv" --python 3.13
+
+          uv pip install \
+            --python "$isolated/venv" \
+            dist/*.whl
+
+          cd "$isolated"
+
+          "$isolated/venv/bin/predictor-ops" --version
+          "$isolated/venv/bin/predictor-ops" --help
+
+      - name: Generate artifact attestations
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            dist/*.whl
+            dist/*.tar.gz
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: predictor-ops-${{ github.run_id }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download package artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: predictor-ops-${{ github.run_id }}
+          path: dist
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+
+            echo "Release ${GITHUB_REF_NAME} already exists."
+            echo "Uploading or replacing package assets."
+
+            gh release upload "${GITHUB_REF_NAME}" \
+              dist/* \
+              --repo "${GITHUB_REPOSITORY}" \
+              --clobber
+          else
+            echo "Creating release ${GITHUB_REF_NAME}."
+
+            gh release create "${GITHUB_REF_NAME}" \
+              dist/* \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "${GITHUB_REF_NAME}" \
+              --generate-notes \
+              --verify-tag
+          fi
