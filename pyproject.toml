@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-redis = ["redis>=6,<8"]
+redis = ["redis>=6,<9"]
 otel = [
   "opentelemetry-api>=1.36,<2",
   "opentelemetry-sdk>=1.36,<2",
