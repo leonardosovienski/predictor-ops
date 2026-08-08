@@ -383,7 +383,7 @@ wheels = [
 
 [[package]]
 name = "predictor-ops"
-version = "2.0.1"
+version = "3.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "pydantic" },
@@ -428,7 +428,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.2" },
     { name = "pytest-timeout", marker = "extra == 'dev'", specifier = ">=2.4" },
-    { name = "redis", marker = "extra == 'redis'", specifier = ">=6,<8" },
+    { name = "redis", marker = "extra == 'redis'", specifier = ">=6,<9" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12" },
 ]
 provides-extras = ["redis", "otel", "dev"]

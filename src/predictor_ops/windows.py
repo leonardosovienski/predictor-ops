@@ -9,12 +9,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from .models import OperationalState
+from .models import RunStatus
 
 
 @dataclass(frozen=True)
 class TaskQuery:
-    status: OperationalState
+    status: RunStatus
     task: dict[str, Any] | None
     reason: str | None = None
 
@@ -25,7 +25,7 @@ def _quote(value: str) -> str:
 
 def inspect_scheduled_task(name: str) -> TaskQuery:
     if os.name != "nt":
-        return TaskQuery(OperationalState.CONFIGURATION_ERROR, None, "Windows Task Scheduler is unavailable")
+        return TaskQuery(RunStatus.CONFIGURATION_ERROR, None, "Windows Task Scheduler is unavailable")
     script = (
         "$ErrorActionPreference='Stop';"
         f"$t=Get-ScheduledTask -TaskName {_quote(name)};$i=Get-ScheduledTaskInfo -TaskName {_quote(name)};"
@@ -46,24 +46,22 @@ def inspect_scheduled_task(name: str) -> TaskQuery:
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
     except (OSError, subprocess.SubprocessError) as exc:
-        return TaskQuery(OperationalState.CONFIGURATION_ERROR, None, type(exc).__name__)
+        return TaskQuery(RunStatus.CONFIGURATION_ERROR, None, type(exc).__name__)
     if result.returncode:
-        return TaskQuery(
-            OperationalState.CONFIGURATION_ERROR, None, f"Task Scheduler query failed ({result.returncode})"
-        )
+        return TaskQuery(RunStatus.CONFIGURATION_ERROR, None, f"Task Scheduler query failed ({result.returncode})")
     try:
         value = json.loads(result.stdout)
     except (TypeError, json.JSONDecodeError):
-        return TaskQuery(OperationalState.CONFIGURATION_ERROR, None, "Task Scheduler returned invalid JSON")
+        return TaskQuery(RunStatus.CONFIGURATION_ERROR, None, "Task Scheduler returned invalid JSON")
     if not isinstance(value, dict) or not isinstance(value.get("enabled"), bool):
-        return TaskQuery(OperationalState.CONFIGURATION_ERROR, None, "Task Scheduler returned an invalid task schema")
+        return TaskQuery(RunStatus.CONFIGURATION_ERROR, None, "Task Scheduler returned an invalid task schema")
     if not value["enabled"]:
-        return TaskQuery(OperationalState.SKIPPED, value, "task is disabled")
+        return TaskQuery(RunStatus.SKIPPED, value, "task is disabled")
     if value.get("last_result") == 267011 or not value.get("last_run") or str(value["last_run"]).startswith("0001-"):
-        return TaskQuery(OperationalState.WAITING, value, "task has never run")
+        return TaskQuery(RunStatus.WAITING, value, "task has never run")
     if value.get("last_result") not in (0, None):
-        return TaskQuery(OperationalState.FAILED, value, f"last_result={value.get('last_result')}")
-    return TaskQuery(OperationalState.SUCCEEDED, value)
+        return TaskQuery(RunStatus.FAILED, value, f"last_result={value.get('last_result')}")
+    return TaskQuery(RunStatus.SUCCEEDED, value)
 
 
 def query_scheduled_task(name: str) -> dict[str, Any] | None:

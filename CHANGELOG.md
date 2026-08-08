@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.0.0
+
+- `RunStatus` agora contém apenas resultados e estados operacionais: `WAITING`,
+  `SUCCEEDED`, `PARTIAL`, `DEGRADED`, `SOURCE_UNAVAILABLE`,
+  `CONFIGURATION_ERROR`, `FAILED` e `SKIPPED`.
+- `JobConfig.scientific_state` transporta uma string opaca definida e validada
+  pelo consumidor/core. O runner persiste esse valor, mas nunca o interpreta.
+- Removidos `OperationalState` e `consumer_status`. Migre decisões operacionais
+  para `RunStatus`; migre `COLLECTION_ONLY`, `PENDING_SAMPLE`, `SHADOW`, `NO_GO`
+  e `CLOSED_BY_HUMAN_DECISION` para `scientific_state`.
+- Um processo pode, por exemplo, terminar com `run_status=SUCCEEDED` e transportar
+  `scientific_state=COLLECTION_ONLY` simultaneamente.
+
 ## 2.0.1
 
 - Deterministically reap every spawned job process and explicitly close all

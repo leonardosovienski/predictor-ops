@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 from . import __version__
-from .models import JobConfig, OperationalState
+from .models import JobConfig, RunStatus
 from .observability import logger
 from .provenance import ProvenanceError, collect_provenance
 from .redaction import redact, redact_command, redact_text, sensitive_values
@@ -26,7 +26,7 @@ def utc_now() -> str:
 @dataclass(frozen=True)
 class RunResult:
     run_id: str
-    status: OperationalState
+    run_status: RunStatus
     exit_code: int
     record: dict[str, Any]
 
@@ -122,16 +122,22 @@ def run_job(
         "run_id": run_id,
         "started_at": started_at,
         "finished_at": None,
-        "status": OperationalState.WAITING,
+        "run_status": RunStatus.WAITING,
+        "scientific_state": job.scientific_state,
         "command": redact_command(job.command, secrets),
         "cwd": str(job.cwd.resolve()) if job.cwd else None,
         "provenance": redact(job.provenance, secrets),
     }
     if not lock.acquired:
-        record = {**base, "status": OperationalState.SKIPPED, "finished_at": utc_now(), "reason": "lock_not_acquired"}
+        record = {
+            **base,
+            "run_status": RunStatus.SKIPPED,
+            "finished_at": utc_now(),
+            "reason": "lock_not_acquired",
+        }
         atomic_json(job_root / f"skipped.{run_id}.json", record)
         append_jsonl(events, record)
-        return RunResult(run_id, OperationalState.SKIPPED, 0, record)
+        return RunResult(run_id, RunStatus.SKIPPED, 0, record)
 
     stop = shutdown or threading.Event()
     output, truncated = bytearray(), threading.Event()
@@ -139,8 +145,8 @@ def run_job(
     reader: threading.Thread | None = None
     reader_errors: list[Exception] = []
     termination: dict[str, Any] | None = None
-    status, exit_code = OperationalState.FAILED, 1
-    record = {**base, "status": OperationalState.WAITING}
+    status, exit_code = RunStatus.FAILED, 1
+    record = {**base, "run_status": RunStatus.WAITING}
     try:
         record["library_provenance"] = collect_provenance(strict=job.provenance_mode == "strict")
         popen_args: dict[str, Any] = {
@@ -157,7 +163,7 @@ def run_job(
             popen_args["start_new_session"] = True
         spawned = cast("subprocess.Popen[bytes]", subprocess.Popen(job.command, **popen_args))
         process = spawned
-        record.update(status=OperationalState.WAITING, pid=spawned.pid)
+        record.update(run_status=RunStatus.WAITING, pid=spawned.pid)
         atomic_json(heartbeat, record)
         reader = threading.Thread(
             target=_drain,
@@ -170,14 +176,14 @@ def run_job(
             now = time.monotonic()
             if stop.is_set() or now >= deadline:
                 termination = _terminate_tree(spawned)
-                status, exit_code = OperationalState.FAILED, 124 if now >= deadline else 130
+                status, exit_code = RunStatus.FAILED, 124 if now >= deadline else 130
                 termination["reason"] = "timeout" if now >= deadline else "shutdown"
                 break
             if now >= next_heartbeat:
                 if not lock.refresh():
                     termination = _terminate_tree(spawned)
                     termination["reason"] = "lock_lost"
-                    status, exit_code = OperationalState.FAILED, 75
+                    status, exit_code = RunStatus.FAILED, 75
                     break
                 record["heartbeat_at"] = utc_now()
                 atomic_json(heartbeat, record)
@@ -186,25 +192,21 @@ def run_job(
         spawned.wait()
         if termination is None:
             exit_code = int(spawned.returncode or 0)
-            status = (
-                job.consumer_status
-                if exit_code == 0 and job.consumer_status
-                else job.exit_statuses.get(exit_code, OperationalState.FAILED)
-            )
-        if status is OperationalState.SUCCEEDED and job.expected_artifact and not job.expected_artifact.exists():
-            status, exit_code = OperationalState.PARTIAL, 4
+            status = job.exit_statuses.get(exit_code, RunStatus.FAILED)
+        if status is RunStatus.SUCCEEDED and job.expected_artifact and not job.expected_artifact.exists():
+            status, exit_code = RunStatus.PARTIAL, 4
     except (OSError, ValueError, ProvenanceError) as exc:
         record["error"] = redact_text(exc, secrets)
-        status, exit_code = OperationalState.CONFIGURATION_ERROR, 3
+        status, exit_code = RunStatus.CONFIGURATION_ERROR, 3
     finally:
         forced_cleanup = _close_process_resources(process, reader, reader_errors)
         if forced_cleanup is not None and termination is None:
             termination = forced_cleanup
         if reader_errors:
-            status, exit_code = OperationalState.FAILED, 74
+            status, exit_code = RunStatus.FAILED, 74
             record["error"] = redact_text(reader_errors[0], secrets)
         record.update(
-            status=status,
+            run_status=status,
             exit_code=exit_code,
             finished_at=utc_now(),
             duration_ms=round((time.monotonic() - started_mono) * 1000),
@@ -230,7 +232,12 @@ def run_job(
         logger().info(
             "job_finished",
             extra={
-                "fields": {"job_id": job.id, "run_id": run_id, "status": status, "duration_ms": record["duration_ms"]}
+                "fields": {
+                    "job_id": job.id,
+                    "run_id": run_id,
+                    "run_status": status,
+                    "duration_ms": record["duration_ms"],
+                }
             },
         )
         if persistence_errors:

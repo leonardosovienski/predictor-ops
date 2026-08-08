@@ -4,11 +4,11 @@ import pytest
 from pydantic import ValidationError
 
 from predictor_ops.config import FileJobConfigSource, HttpJobConfigSource, load_job
-from predictor_ops.models import JobConfig, JobsFile, OperationalState, RuntimeConfig
+from predictor_ops.models import JobConfig, JobsFile, RunStatus, RuntimeConfig
 
 
 def test_taxonomy_is_complete():
-    assert {state.value for state in OperationalState} == {
+    assert {state.value for state in RunStatus} == {
         "SUCCEEDED",
         "PARTIAL",
         "DEGRADED",
@@ -17,12 +17,14 @@ def test_taxonomy_is_complete():
         "FAILED",
         "SKIPPED",
         "WAITING",
-        "PENDING_SAMPLE",
-        "COLLECTION_ONLY",
-        "SHADOW",
-        "NO_GO",
-        "CLOSED_BY_HUMAN_DECISION",
     }
+
+
+def test_scientific_state_is_opaque_and_separate():
+    job = JobConfig(id="x", command=["echo"], scientific_state="COLLECTION_ONLY")
+    assert job.scientific_state == "COLLECTION_ONLY"
+    with pytest.raises(ValidationError):
+        JobConfig(id="x", command=["echo"], scientific_state=" ")
 
 
 def test_config_is_strict_and_unique(tmp_path):

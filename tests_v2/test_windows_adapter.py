@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 from predictor_ops import windows
-from predictor_ops.models import OperationalState
+from predictor_ops.models import RunStatus
 
 
 def _result(payload=None, returncode=0):
@@ -16,16 +16,16 @@ def _result(payload=None, returncode=0):
 def test_non_windows_fails_closed(monkeypatch):
     monkeypatch.setattr(windows.os, "name", "posix")
     result = windows.inspect_scheduled_task("anything")
-    assert result.status is OperationalState.CONFIGURATION_ERROR and result.task is None
+    assert result.status is RunStatus.CONFIGURATION_ERROR and result.task is None
 
 
 def test_present_disabled_failed_never_run_and_success(monkeypatch):
     monkeypatch.setattr(windows.os, "name", "nt")
     values = [
-        ({"enabled": False}, OperationalState.SKIPPED),
-        ({"enabled": True, "last_result": 9, "last_run": "2026-01-01T00:00:00Z"}, OperationalState.FAILED),
-        ({"enabled": True, "last_result": 0, "last_run": "0001-01-01T00:00:00Z"}, OperationalState.WAITING),
-        ({"enabled": True, "last_result": 0, "last_run": "2026-01-01T00:00:00Z"}, OperationalState.SUCCEEDED),
+        ({"enabled": False}, RunStatus.SKIPPED),
+        ({"enabled": True, "last_result": 9, "last_run": "2026-01-01T00:00:00Z"}, RunStatus.FAILED),
+        ({"enabled": True, "last_result": 0, "last_run": "0001-01-01T00:00:00Z"}, RunStatus.WAITING),
+        ({"enabled": True, "last_result": 0, "last_run": "2026-01-01T00:00:00Z"}, RunStatus.SUCCEEDED),
     ]
     for payload, expected in values:
         monkeypatch.setattr(windows.subprocess, "run", lambda *a, payload=payload, **k: _result(payload))
@@ -56,13 +56,13 @@ def test_quoting_spaced_paths_no_console_and_compat_view(monkeypatch):
 def test_permission_missing_powershell_invalid_json_and_schema_fail_closed(monkeypatch):
     monkeypatch.setattr(windows.os, "name", "nt")
     monkeypatch.setattr(windows.subprocess, "run", lambda *a, **k: _result(returncode=5))
-    assert windows.inspect_scheduled_task("x").status is OperationalState.CONFIGURATION_ERROR
+    assert windows.inspect_scheduled_task("x").status is RunStatus.CONFIGURATION_ERROR
     monkeypatch.setattr(windows.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(FileNotFoundError()))
-    assert windows.inspect_scheduled_task("x").status is OperationalState.CONFIGURATION_ERROR
+    assert windows.inspect_scheduled_task("x").status is RunStatus.CONFIGURATION_ERROR
     monkeypatch.setattr(windows.subprocess, "run", lambda *a, **k: SimpleNamespace(stdout="not-json", returncode=0))
-    assert windows.inspect_scheduled_task("x").status is OperationalState.CONFIGURATION_ERROR
+    assert windows.inspect_scheduled_task("x").status is RunStatus.CONFIGURATION_ERROR
     monkeypatch.setattr(windows.subprocess, "run", lambda *a, **k: _result({"enabled": "yes"}))
-    assert windows.inspect_scheduled_task("x").status is OperationalState.CONFIGURATION_ERROR
+    assert windows.inspect_scheduled_task("x").status is RunStatus.CONFIGURATION_ERROR
 
 
 def test_overdue_is_fail_closed():

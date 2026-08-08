@@ -7,7 +7,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-class OperationalState(StrEnum):
+class RunStatus(StrEnum):
     SUCCEEDED = "SUCCEEDED"
     PARTIAL = "PARTIAL"
     DEGRADED = "DEGRADED"
@@ -16,11 +16,6 @@ class OperationalState(StrEnum):
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
     WAITING = "WAITING"
-    PENDING_SAMPLE = "PENDING_SAMPLE"
-    COLLECTION_ONLY = "COLLECTION_ONLY"
-    SHADOW = "SHADOW"
-    NO_GO = "NO_GO"
-    CLOSED_BY_HUMAN_DECISION = "CLOSED_BY_HUMAN_DECISION"
 
 
 class RuntimeConfig(BaseModel):
@@ -50,10 +45,8 @@ class JobConfig(BaseModel):
     expected_artifact: Path | None = None
     provenance: dict[str, Any] = Field(default_factory=dict)
     provenance_mode: Literal["strict", "permissive"] = "permissive"
-    consumer_status: OperationalState | None = None
-    exit_statuses: dict[int, OperationalState] = Field(
-        default_factory=lambda: {0: OperationalState.SUCCEEDED, 2: OperationalState.PARTIAL}
-    )
+    scientific_state: str | None = None
+    exit_statuses: dict[int, RunStatus] = Field(default_factory=lambda: {0: RunStatus.SUCCEEDED, 2: RunStatus.PARTIAL})
     runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
 
     @field_validator("command")
@@ -65,9 +58,16 @@ class JobConfig(BaseModel):
 
     @field_validator("exit_statuses")
     @classmethod
-    def exit_statuses_are_valid(cls, value: dict[int, OperationalState]) -> dict[int, OperationalState]:
+    def exit_statuses_are_valid(cls, value: dict[int, RunStatus]) -> dict[int, RunStatus]:
         if any(code < 0 or code > 255 for code in value):
             raise ValueError("exit status codes must be between 0 and 255")
+        return value
+
+    @field_validator("scientific_state")
+    @classmethod
+    def scientific_state_is_opaque_but_nonempty(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError("scientific_state must be a non-empty consumer-defined string")
         return value
 
 

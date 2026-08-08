@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from predictor_ops.health import HealthPolicy, assess, load_heartbeat
-from predictor_ops.models import OperationalState
+from predictor_ops.models import RunStatus
 from predictor_ops.windows import TaskQuery
 
 NOW = datetime(2026, 1, 2, tzinfo=UTC)
@@ -16,37 +16,37 @@ def _policy(tmp_path):
 
 
 def _write(policy, status="SUCCEEDED", finished=None):
-    policy.heartbeat_path.write_text(json.dumps({"status": status, "finished_at": finished or NOW.isoformat()}))
+    policy.heartbeat_path.write_text(json.dumps({"run_status": status, "finished_at": finished or NOW.isoformat()}))
 
 
 def test_recent_success_is_healthy_and_deterministic(tmp_path):
     policy = _policy(tmp_path)
     _write(policy)
-    first = assess(policy, TaskQuery(OperationalState.SUCCEEDED, {}), now=NOW)
-    second = assess(policy, TaskQuery(OperationalState.SUCCEEDED, {}), now=NOW)
-    assert first == second and first["status"] is OperationalState.SUCCEEDED
+    first = assess(policy, TaskQuery(RunStatus.SUCCEEDED, {}), now=NOW)
+    second = assess(policy, TaskQuery(RunStatus.SUCCEEDED, {}), now=NOW)
+    assert first == second and first["status"] is RunStatus.SUCCEEDED
 
 
 def test_scheduler_failure_wins_and_expected_disabled_is_skipped(tmp_path):
     policy = _policy(tmp_path)
     _write(policy)
-    failed = assess(policy, TaskQuery(OperationalState.FAILED, {}, "last result"), now=NOW)
-    assert failed["status"] is OperationalState.FAILED
+    failed = assess(policy, TaskQuery(RunStatus.FAILED, {}, "last result"), now=NOW)
+    assert failed["status"] is RunStatus.FAILED
     policy.expected_enabled = False
-    skipped = assess(policy, TaskQuery(OperationalState.SKIPPED, {}, "disabled"), now=NOW)
-    assert skipped["status"] is OperationalState.SKIPPED
+    skipped = assess(policy, TaskQuery(RunStatus.SKIPPED, {}, "disabled"), now=NOW)
+    assert skipped["status"] is RunStatus.SKIPPED
 
 
 @pytest.mark.parametrize("status", ["SOURCE_UNAVAILABLE", "PARTIAL", "DEGRADED", "FAILED"])
 def test_absence_and_degraded_states_are_never_success(tmp_path, status):
     policy = _policy(tmp_path)
     _write(policy, status=status)
-    assert assess(policy, None, now=NOW)["status"] is not OperationalState.SUCCEEDED
+    assert assess(policy, None, now=NOW)["status"] is not RunStatus.SUCCEEDED
 
 
 def test_missing_invalid_and_stale_heartbeat_fail_closed(tmp_path):
     policy = _policy(tmp_path)
-    assert assess(policy, None, now=NOW)["status"] is OperationalState.FAILED
+    assert assess(policy, None, now=NOW)["status"] is RunStatus.FAILED
     policy.heartbeat_path.write_text("bad-json")
     assert load_heartbeat(policy.heartbeat_path) is None
     _write(policy, finished=(NOW - timedelta(seconds=61)).isoformat())

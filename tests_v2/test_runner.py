@@ -2,7 +2,7 @@ import json
 import sys
 import threading
 
-from predictor_ops.models import JobConfig, OperationalState, RuntimeConfig
+from predictor_ops.models import JobConfig, RunStatus, RuntimeConfig
 from predictor_ops.observability import configure_otel, logger
 from predictor_ops.redaction import REDACTED, redact, redact_text, sensitive_values
 from predictor_ops.runner import run_job
@@ -21,9 +21,9 @@ def job(tmp_path, code, **values):
 
 def test_success_provenance_and_artifacts(tmp_path):
     result = run_job(job(tmp_path, "print('ok')", provenance={"commit": "abc"}))
-    assert result.status is OperationalState.SUCCEEDED
+    assert result.run_status is RunStatus.SUCCEEDED
     assert result.record["provenance"] == {"commit": "abc"}
-    assert json.loads((tmp_path / "test" / "heartbeat.json").read_text())["status"] == "SUCCEEDED"
+    assert json.loads((tmp_path / "test" / "heartbeat.json").read_text())["run_status"] == "SUCCEEDED"
     assert len((tmp_path / "test" / "events.jsonl").read_text().splitlines()) == 1
 
 
@@ -31,7 +31,7 @@ def test_concurrent_run_is_skipped(tmp_path):
     runtime = LocalBackend(tmp_path)
     lock = runtime.acquire("same", "owner", 60)
     result = run_job(job(tmp_path, "print('never')", id="same"), runtime_backend=runtime)
-    assert result.status is OperationalState.SKIPPED
+    assert result.run_status is RunStatus.SKIPPED
     lock.release()
 
 
@@ -44,7 +44,7 @@ def test_timeout_and_truncation(tmp_path):
             max_output_bytes=20,
         )
     )
-    assert result.exit_code == 124 and result.status is OperationalState.FAILED
+    assert result.exit_code == 124 and result.run_status is RunStatus.FAILED
     assert result.record["termination"]["reason"] == "timeout"
     assert result.record["output"]["truncated"] and result.record["output"]["bytes"] == 20
 
@@ -52,7 +52,7 @@ def test_timeout_and_truncation(tmp_path):
 def test_crash_and_missing_expected_artifact(tmp_path):
     assert run_job(job(tmp_path, "raise SystemExit(9)", id="crash")).exit_code == 9
     result = run_job(job(tmp_path, "pass", id="artifact", expected_artifact=tmp_path / "missing"))
-    assert result.status is OperationalState.PARTIAL
+    assert result.run_status is RunStatus.PARTIAL
 
 
 def test_shutdown(tmp_path):

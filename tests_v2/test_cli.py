@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from predictor_ops import cli
-from predictor_ops.models import OperationalState
+from predictor_ops.models import RunStatus
 from predictor_ops.runner import RunResult
 
 
@@ -39,7 +39,7 @@ def test_cli_validate_and_run_outside_checkout(tmp_path):
         [executable, "run", "--config", str(config), "--job", "smoke"], cwd=tmp_path, capture_output=True, text=True
     )
     assert run.returncode == 0, run.stderr
-    assert json.loads((runtime / "smoke" / "heartbeat.json").read_text())["status"] == "SUCCEEDED"
+    assert json.loads((runtime / "smoke" / "heartbeat.json").read_text())["run_status"] == "SUCCEEDED"
 
 
 def test_no_tools_namespace_required(tmp_path):
@@ -60,7 +60,7 @@ def test_cli_main_paths(tmp_path, monkeypatch, capsys):
 
     def fake_run(job, shutdown):
         seen.append(job)
-        return RunResult("run", OperationalState.SUCCEEDED, 0, {})
+        return RunResult("run", RunStatus.SUCCEEDED, 0, {})
 
     monkeypatch.setattr(cli, "run_job", fake_run)
     runtime = tmp_path / "runtime"

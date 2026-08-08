@@ -8,7 +8,7 @@ named `tools`.
 ## Install and use
 
 ```bash
-pip install predictor_ops-2.0.1-py3-none-any.whl
+pip install predictor_ops-3.0.0-py3-none-any.whl
 predictor-ops validate jobs.json
 predictor-ops run --config jobs.json --job example-collection
 predictor-ops run --job-id adhoc --command python -m my_pipeline
@@ -34,10 +34,10 @@ provenance supplied by the consumer, and graceful `SIGINT`/`SIGTERM` shutdown.
 Secrets are collected from sensitive environment keys and redacted from
 arguments, output, errors, provenance, heartbeats, JSONL and JSON logs.
 
-Operational states share one enum: `SUCCEEDED`, `PARTIAL`, `DEGRADED`,
-`SOURCE_UNAVAILABLE`, `CONFIGURATION_ERROR`, `FAILED`, `SKIPPED`, `WAITING`,
-`PENDING_SAMPLE`, `COLLECTION_ONLY`, `SHADOW`, `NO_GO`, and
-`CLOSED_BY_HUMAN_DECISION`.
+`RunStatus` contains operational states only: `SUCCEEDED`, `PARTIAL`,
+`DEGRADED`, `SOURCE_UNAVAILABLE`, `CONFIGURATION_ERROR`, `FAILED`, `SKIPPED`
+and `WAITING`. Consumers may attach an opaque `scientific_state` to a job; the
+runner persists and transports it without interpreting scientific semantics.
 
 Logs are JSON on stdout. Install `predictor-ops[otel]` and call
 `configure_otel()` to export OTLP traces; active trace/span IDs are included in

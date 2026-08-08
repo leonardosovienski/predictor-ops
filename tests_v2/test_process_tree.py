@@ -5,7 +5,7 @@ import sys
 import time
 from pathlib import Path
 
-from predictor_ops.models import JobConfig, OperationalState, RuntimeConfig
+from predictor_ops.models import JobConfig, RunStatus, RuntimeConfig
 from predictor_ops.runner import run_job
 
 
@@ -64,7 +64,7 @@ def test_timeout_kills_real_parent_child_grandchild_with_spaced_paths(tmp_path):
         runtime=RuntimeConfig(root=tmp_path / "runtime"),
     )
     result = run_job(config)
-    assert result.status is OperationalState.FAILED
+    assert result.run_status is RunStatus.FAILED
     assert result.record["termination"]["reason"] == "timeout"
     pids = [
         int(line.removeprefix("PID:"))

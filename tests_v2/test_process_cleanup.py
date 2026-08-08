@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 import predictor_ops.runner as runner
-from predictor_ops.models import JobConfig, OperationalState, RuntimeConfig
+from predictor_ops.models import JobConfig, RunStatus, RuntimeConfig
 
 
 def _job(tmp_path: Path, code: str, **kwargs) -> JobConfig:
@@ -38,9 +38,9 @@ def _resource_count() -> int:
 @pytest.mark.parametrize(
     ("code", "expected"),
     [
-        ("print('ok')", OperationalState.SUCCEEDED),
-        ("raise SystemExit(9)", OperationalState.FAILED),
-        ("raise SystemExit(2)", OperationalState.PARTIAL),
+        ("print('ok')", RunStatus.SUCCEEDED),
+        ("raise SystemExit(9)", RunStatus.FAILED),
+        ("raise SystemExit(2)", RunStatus.PARTIAL),
     ],
 )
 def test_all_normal_exit_paths_close_popen_streams(tmp_path, monkeypatch, code, expected):
@@ -57,7 +57,7 @@ def test_all_normal_exit_paths_close_popen_streams(tmp_path, monkeypatch, code, 
         warnings.simplefilter("always", ResourceWarning)
         result = runner.run_job(_job(tmp_path, code))
         gc.collect()
-    assert result.status is expected
+    assert result.run_status is expected
     direct = next(process for process in reversed(created) if process.args == [sys.executable, "-c", code])
     assert direct.poll() is not None
     assert direct.stdin is None or direct.stdin.closed
@@ -95,7 +95,7 @@ def test_exception_after_popen_terminates_child_and_closes_pipe(tmp_path, monkey
     monkeypatch.setattr(runner.subprocess, "Popen", tracking_popen)
     monkeypatch.setattr(runner, "atomic_json", fail_once)
     result = runner.run_job(_job(tmp_path, "import time; time.sleep(30)", id="setup-error"))
-    assert result.status is OperationalState.CONFIGURATION_ERROR
+    assert result.run_status is RunStatus.CONFIGURATION_ERROR
     direct = created[-1]
     assert direct.poll() is not None and direct.stdout.closed
 
@@ -106,7 +106,7 @@ def test_reader_failure_is_observable_and_resources_close(tmp_path, monkeypatch)
 
     monkeypatch.setattr(runner, "_drain", broken_reader)
     result = runner.run_job(_job(tmp_path, "print('unread')", id="read-failure"))
-    assert result.status is OperationalState.FAILED and result.exit_code == 74
+    assert result.run_status is RunStatus.FAILED and result.exit_code == 74
     assert "simulated read failure" in result.record["error"]
 
 
@@ -115,7 +115,7 @@ def test_repeated_runs_do_not_accumulate_handles_or_readers(tmp_path):
     before = _resource_count()
     for index in range(30):
         result = runner.run_job(_job(tmp_path, "print('ok')", id=f"repeat-{index}"))
-        assert result.status is OperationalState.SUCCEEDED
+        assert result.run_status is RunStatus.SUCCEEDED
     gc.collect()
     after = _resource_count()
     assert after <= before + 2, (before, after)
@@ -125,6 +125,6 @@ def test_repeated_runs_do_not_accumulate_handles_or_readers(tmp_path):
 def test_large_stdout_and_stderr_are_drained_without_deadlock(tmp_path):
     code = "import os\nchunk=b'x'*65536\nfor _ in range(32):\n os.write(1,chunk); os.write(2,chunk)\n"
     result = runner.run_job(_job(tmp_path, code, id="large-output", timeout_seconds=10, max_output_bytes=5_000_000))
-    assert result.status is OperationalState.SUCCEEDED
+    assert result.run_status is RunStatus.SUCCEEDED
     assert result.record["output"]["bytes"] == 4 * 1024 * 1024
     assert not result.record["output"]["truncated"]

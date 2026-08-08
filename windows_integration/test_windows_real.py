@@ -5,7 +5,7 @@ import uuid
 
 import pytest
 
-from predictor_ops.models import OperationalState
+from predictor_ops.models import RunStatus
 from predictor_ops.windows import inspect_scheduled_task
 
 
@@ -41,24 +41,24 @@ def test_real_powershell_and_missing_task_fail_closed():
     )
     assert version.returncode == 0 and version.stdout.strip()
     result = inspect_scheduled_task("predictor-ops-ci-definitely-absent")
-    assert result.status is OperationalState.CONFIGURATION_ERROR
+    assert result.status is RunStatus.CONFIGURATION_ERROR
 
 
 def test_real_present_never_run_disabled_and_failed_task(task_name):
     never = inspect_scheduled_task(task_name)
-    assert never.status is OperationalState.WAITING and never.task is not None
+    assert never.status is RunStatus.WAITING and never.task is not None
     assert never.task["actions"][0]["execute"] == "cmd.exe"
     disabled = _powershell(f"Disable-ScheduledTask -TaskName '{task_name}' | Out-Null")
     assert disabled.returncode == 0
-    assert inspect_scheduled_task(task_name).status is OperationalState.SKIPPED
+    assert inspect_scheduled_task(task_name).status is RunStatus.SKIPPED
     started = _powershell(
         f"Enable-ScheduledTask -TaskName '{task_name}' | Out-Null; Start-ScheduledTask -TaskName '{task_name}'"
     )
     assert started.returncode == 0
     deadline = time.monotonic() + 10
     result = inspect_scheduled_task(task_name)
-    while time.monotonic() < deadline and result.status is OperationalState.WAITING:
+    while time.monotonic() < deadline and result.status is RunStatus.WAITING:
         time.sleep(0.2)
         result = inspect_scheduled_task(task_name)
-    assert result.status is OperationalState.FAILED and result.task is not None
+    assert result.status is RunStatus.FAILED and result.task is not None
     assert result.task["last_result"] == 7

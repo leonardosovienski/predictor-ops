@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from predictor_ops.models import JobConfig, OperationalState, RuntimeConfig
+from predictor_ops.models import JobConfig, RunStatus, RuntimeConfig
 from predictor_ops.runner import run_job
 from predictor_ops.runtime import LocalBackend, append_jsonl, atomic_json
 
@@ -19,20 +19,21 @@ def _job(tmp_path, code="pass", **kwargs):
     )
 
 
-def test_partial_exit_and_consumer_status(tmp_path):
+def test_partial_exit_and_scientific_state_transport(tmp_path):
     partial = run_job(_job(tmp_path, "raise SystemExit(2)", id="partial"))
-    assert partial.exit_code == 2 and partial.status is OperationalState.PARTIAL
-    source = run_job(_job(tmp_path, id="source", consumer_status=OperationalState.SOURCE_UNAVAILABLE))
-    assert source.status is OperationalState.SOURCE_UNAVAILABLE
+    assert partial.exit_code == 2 and partial.run_status is RunStatus.PARTIAL
+    source = run_job(_job(tmp_path, id="source", scientific_state="PENDING_SAMPLE"))
+    assert source.run_status is RunStatus.SUCCEEDED
+    assert source.record["scientific_state"] == "PENDING_SAMPLE"
 
 
 def test_strict_setup_failure_is_terminal_and_child_never_runs(tmp_path):
     marker = tmp_path / "must-not-exist"
     result = run_job(_job(tmp_path, f"open({str(marker)!r},'w').write('bad')", id="strict", provenance_mode="strict"))
-    assert result.status is OperationalState.CONFIGURATION_ERROR and result.exit_code == 3
+    assert result.run_status is RunStatus.CONFIGURATION_ERROR and result.exit_code == 3
     assert not marker.exists()
     heartbeat = json.loads((tmp_path / "strict" / "heartbeat.json").read_text())
-    assert heartbeat["status"] == "CONFIGURATION_ERROR" and "editable" in heartbeat["error"]
+    assert heartbeat["run_status"] == "CONFIGURATION_ERROR" and "editable" in heartbeat["error"]
 
 
 class LosingLock:
