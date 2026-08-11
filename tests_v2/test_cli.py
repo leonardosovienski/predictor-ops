@@ -70,6 +70,32 @@ def test_cli_main_paths(tmp_path, monkeypatch, capsys):
     assert seen[-1].command[-1] == "-V"
 
 
+def test_cli_provenance_is_strict_and_machine_readable(tmp_path, monkeypatch, capsys):
+    seen = []
+
+    def fake_collect(*, strict, source_root=None):
+        seen.append((strict, source_root))
+        return {"identity_status": "VALIDATED", "kind": "source"}
+
+    monkeypatch.setattr(cli, "collect_provenance", fake_collect)
+    assert cli.main(["provenance", "--source-root", str(tmp_path)]) == 0
+    assert seen == [(True, tmp_path)]
+    assert json.loads(capsys.readouterr().out) == {
+        "identity_status": "VALIDATED",
+        "kind": "source",
+    }
+
+
+def test_cli_provenance_fails_closed(monkeypatch, capsys):
+    def fail(**_kwargs):
+        raise RuntimeError("identity unavailable")
+
+    monkeypatch.setattr(cli, "collect_provenance", fail)
+    assert cli.main(["provenance"]) == 3
+    error = json.loads(capsys.readouterr().err)
+    assert error == {"error": "identity unavailable", "status": "CONFIGURATION_ERROR"}
+
+
 def test_cli_configuration_errors(tmp_path, capsys):
     missing = tmp_path / "missing.json"
     assert cli.main(["run", "--config", str(missing), "--job", "x"]) == 3

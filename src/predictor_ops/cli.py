@@ -13,6 +13,7 @@ from pydantic import ValidationError
 from . import __version__
 from .config import FileJobConfigSource, load_job
 from .models import JobConfig
+from .provenance import collect_provenance, safe_serialize
 from .redaction import redact_text
 from .runner import run_job
 
@@ -30,6 +31,8 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--runtime-root", type=Path)
     validate = commands.add_parser("validate", help="validate a jobs file")
     validate.add_argument("config", type=Path)
+    provenance = commands.add_parser("provenance", help="verify the installed wheel or a clean source checkout")
+    provenance.add_argument("--source-root", type=Path)
     return root
 
 
@@ -39,6 +42,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.action == "validate":
             jobs = FileJobConfigSource(args.config).load()
             print(json.dumps({"valid": True, "jobs": len(jobs.jobs)}, sort_keys=True))
+            return 0
+        if args.action == "provenance":
+            print(safe_serialize(collect_provenance(strict=True, source_root=args.source_root)))
             return 0
         if args.config:
             if not args.job:
