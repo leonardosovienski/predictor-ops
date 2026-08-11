@@ -10,7 +10,9 @@ ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 RUN addgroup -S predictor && adduser -S -D -H -h /nonexistent -G predictor predictor \
     && mkdir -p /var/lib/predictor-ops && chown predictor:predictor /var/lib/predictor-ops
 COPY --from=builder /wheels /wheels
-RUN python -m pip install --no-cache-dir /wheels/*.whl && rm -rf /wheels
+RUN python -m pip install --no-cache-dir /wheels/*.whl \
+    && python -m pip uninstall --yes msgpack setuptools pip \
+    && rm -rf /wheels /root/.cache
 USER predictor
 WORKDIR /var/lib/predictor-ops
 ENTRYPOINT ["predictor-ops"]
