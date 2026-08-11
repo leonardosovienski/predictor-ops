@@ -10,6 +10,7 @@ named `tools`.
 ```bash
 pip install predictor_ops-3.0.0-py3-none-any.whl
 predictor-ops validate jobs.json
+predictor-ops provenance
 predictor-ops run --config jobs.json --job example-collection
 predictor-ops run --job-id adhoc --command python -m my_pipeline
 ```
@@ -18,6 +19,12 @@ Copy `jobs.example.json` and define operational policy outside application
 code. Unknown fields, duplicate IDs, unsafe NUL arguments and incomplete Redis
 configuration fail validation. `FileJobConfigSource` and the HTTPS-only,
 validated `HttpJobConfigSource` implement the same typed contract.
+
+`predictor-ops provenance` verifies the installed wheel against its `RECORD` and
+prints deterministic JSON. It fails closed for editable, incomplete, or modified
+installations. For development checkouts, `--source-root PATH` accepts only a clean
+Git worktree with a resolvable commit. This command is suitable for an early CI
+supply-chain gate and does not contact the network.
 
 ## Runtime contract
 
