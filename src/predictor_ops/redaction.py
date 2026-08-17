@@ -5,6 +5,16 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 REDACTED = "[REDACTED]"
+# Floor for values auto-harvested from the environment by sensitive_values().
+# Below this length, a short/generic value (a placeholder, a test fixture) is
+# too likely to coincidentally appear as a substring of unrelated generated
+# data (a run_id, a timestamp) — redact_text()/redact() would then corrupt
+# that unrelated field via blind substring replacement. This floor only
+# gates automatic environment harvesting; a caller that explicitly passes a
+# short secret to redact()/redact_text()/redact_command() still gets it
+# redacted, since that's a deliberate, scoped instruction rather than a
+# blanket sweep of every "sensitive-named" env var in the process.
+MIN_SENSITIVE_VALUE_LENGTH = 12
 SENSITIVE_KEY = re.compile(r"(?i)(?:secret|token|password|passwd|api[_-]?key|authorization|credential|private[_-]?key)")
 ASSIGNMENT = re.compile(
     r"(?i)(?P<key>(?:secret|token|password|passwd|api[_-]?key|authorization|credential))(?P<sep>\s*[:=]\s*)(?P<value>[^\s,;&]+)"
@@ -21,7 +31,13 @@ SENSITIVE_FLAG = re.compile(
 def sensitive_values(environment: Mapping[str, str]) -> tuple[str, ...]:
     return tuple(
         sorted(
-            {value for key, value in environment.items() if value and SENSITIVE_KEY.search(key)}, key=len, reverse=True
+            {
+                value
+                for key, value in environment.items()
+                if value and len(value) >= MIN_SENSITIVE_VALUE_LENGTH and SENSITIVE_KEY.search(key)
+            },
+            key=len,
+            reverse=True,
         )
     )
 
