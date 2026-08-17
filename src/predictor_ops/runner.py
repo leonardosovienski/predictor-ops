@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import signal
 import subprocess
@@ -14,6 +15,7 @@ from typing import Any, cast
 from . import __version__
 from .models import JobConfig, RunStatus
 from .observability import logger
+from .operations import economic_lock_id, kill_switch_reasons
 from .provenance import ProvenanceError, collect_provenance
 from .redaction import redact, redact_command, redact_text, sensitive_values
 from .runtime import RuntimeBackend, append_jsonl, atomic_json, backend
@@ -111,14 +113,19 @@ def run_job(
     environment.update(job.environment)
     secrets = sensitive_values(environment)
     runtime_backend = runtime_backend or backend(job.runtime)
-    lock = runtime_backend.acquire(job.id, run_id, job.runtime.lock_stale_after_seconds)
+    lock_id = economic_lock_id(job)
+    lock = runtime_backend.acquire(lock_id, run_id, job.runtime.lock_stale_after_seconds)
     job_root = job.runtime.root / job.id
     heartbeat, events = job_root / "heartbeat.json", job_root / "events.jsonl"
+    idempotency_record = job.runtime.root / "idempotency" / f"{lock_id}.json"
     base: dict[str, Any] = {
         "schema_version": "1",
         "service": "predictor_ops",
         "library_version": __version__,
         "job_id": job.id,
+        "job_type": job.job_type,
+        "economic_key": job.economic_key.model_dump(mode="json") if job.economic_key else None,
+        "economic_lock_id": lock_id,
         "run_id": run_id,
         "started_at": started_at,
         "finished_at": None,
@@ -138,6 +145,44 @@ def run_job(
         atomic_json(job_root / f"skipped.{run_id}.json", record)
         append_jsonl(events, record)
         return RunResult(run_id, RunStatus.SKIPPED, 0, record)
+
+    if idempotency_record.exists():
+        try:
+            previous_attempt = json.loads(idempotency_record.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            previous_attempt = {"state": "UNKNOWN"}
+        if previous_attempt.get("state") == "SUCCEEDED" or job.capital_permission:
+            record = {
+                **base,
+                "run_status": RunStatus.SKIPPED,
+                "finished_at": utc_now(),
+                "reason": "economic_operation_already_claimed",
+                "previous_attempt": previous_attempt,
+            }
+            atomic_json(job_root / f"skipped.{run_id}.json", record)
+            append_jsonl(events, record)
+            lock.release()
+            return RunResult(run_id, RunStatus.SKIPPED, 0, record)
+
+    kill_reasons = kill_switch_reasons(job)
+    if kill_reasons:
+        record = {
+            **base,
+            "run_status": RunStatus.SKIPPED,
+            "finished_at": utc_now(),
+            "reason": "kill_switch_open",
+            "kill_switch_reasons": kill_reasons,
+        }
+        atomic_json(job_root / f"skipped.{run_id}.json", record)
+        append_jsonl(events, record)
+        lock.release()
+        return RunResult(run_id, RunStatus.SKIPPED, 0, record)
+
+    if job.economic_key is not None:
+        atomic_json(
+            idempotency_record,
+            {"state": "IN_PROGRESS", "job_id": job.id, "run_id": run_id, "claimed_at": utc_now()},
+        )
 
     stop = shutdown or threading.Event()
     output, truncated = bytearray(), threading.Event()
@@ -171,7 +216,9 @@ def run_job(
             name=f"predictor-ops-output-{run_id}",
         )
         reader.start()
-        deadline, next_heartbeat = started_mono + job.timeout_seconds, time.monotonic()
+        # The command timeout measures child execution, not provenance and
+        # process-setup work performed before the child exists.
+        deadline, next_heartbeat = time.monotonic() + job.timeout_seconds, time.monotonic()
         while spawned.poll() is None:
             now = time.monotonic()
             if stop.is_set() or now >= deadline:
@@ -220,6 +267,22 @@ def run_job(
             record["termination"] = termination
         record = redact(record, secrets)
         persistence_errors: list[Exception] = []
+        if job.economic_key is not None:
+            try:
+                atomic_json(
+                    idempotency_record,
+                    {
+                        "state": status,
+                        "job_id": job.id,
+                        "run_id": run_id,
+                        "updated_at": utc_now(),
+                        "requires_reconciliation": bool(
+                            job.capital_permission and status is not RunStatus.SUCCEEDED
+                        ),
+                    },
+                )
+            except Exception as exc:
+                persistence_errors.append(exc)
         try:
             atomic_json(heartbeat, record)
         except Exception as exc:

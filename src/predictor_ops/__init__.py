@@ -7,7 +7,22 @@ try:
 except PackageNotFoundError:  # source tree without an editable install
     __version__ = "0+unknown"
 
-from .models import JobConfig, RunStatus
+from .audit import AppendOnlyAuditLog, CycleStage
+from .models import EconomicJobKey, JobConfig, JobType, RunStatus
+from .operations import OrderState, RetryAction, retry_action
 from .runner import RunResult, run_job
 
-__all__ = ["JobConfig", "RunResult", "RunStatus", "__version__", "run_job"]
+__all__ = [
+    "AppendOnlyAuditLog",
+    "CycleStage",
+    "EconomicJobKey",
+    "JobConfig",
+    "JobType",
+    "OrderState",
+    "RetryAction",
+    "RunResult",
+    "RunStatus",
+    "__version__",
+    "retry_action",
+    "run_job",
+]

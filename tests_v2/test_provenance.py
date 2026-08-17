@@ -104,6 +104,7 @@ def test_wheel_missing_record_and_editable_metadata_fail_closed(tmp_path, monkey
         provenance._verify_wheel()
 
 
+@pytest.mark.timeout(120)
 def test_wheel_record_tampering_fails_in_isolated_environment(tmp_path):
     dist = tmp_path / "dist"
     subprocess.run(

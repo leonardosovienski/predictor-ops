@@ -32,7 +32,17 @@ def atomic_json(path: Path, payload: dict[str, Any]) -> None:
             handle.write(encoded)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        deadline = time.monotonic() + 1
+        while True:
+            try:
+                os.replace(temporary, path)
+                break
+            except PermissionError:
+                # Windows scanners and indexers can briefly hold a newly fsynced
+                # file. Preserve atomic replacement while tolerating that race.
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.01)
     finally:
         temporary.unlink(missing_ok=True)
 

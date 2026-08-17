@@ -110,7 +110,11 @@ def test_reader_failure_is_observable_and_resources_close(tmp_path, monkeypatch)
     assert "simulated read failure" in result.record["error"]
 
 
-def test_repeated_runs_do_not_accumulate_handles_or_readers(tmp_path):
+@pytest.mark.timeout(120)
+def test_repeated_runs_do_not_accumulate_handles_or_readers(tmp_path, monkeypatch):
+    # This test measures process resources, so avoid repeatedly hashing the
+    # installed wheel (particularly expensive under Windows endpoint scanners).
+    monkeypatch.setattr(runner, "collect_provenance", lambda **_kwargs: {"identity_status": "VALIDATED"})
     gc.collect()
     before = _resource_count()
     for index in range(30):

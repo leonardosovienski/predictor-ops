@@ -8,7 +8,7 @@ named `tools`.
 ## Install and use
 
 ```bash
-pip install predictor_ops-3.0.0-py3-none-any.whl
+pip install predictor_ops-3.1.0-py3-none-any.whl
 predictor-ops validate jobs.json
 predictor-ops provenance
 predictor-ops run --config jobs.json --job example-collection
@@ -19,6 +19,34 @@ Copy `jobs.example.json` and define operational policy outside application
 code. Unknown fields, duplicate IDs, unsafe NUL arguments and incomplete Redis
 configuration fail validation. `FileJobConfigSource` and the HTTPS-only,
 validated `HttpJobConfigSource` implement the same typed contract.
+
+## Reliable operational execution (schema v2)
+
+Schema v2 separates eight job types: sports and market collection, forecast
+generation, shadow decision, execution, settlement, reconciliation and risk
+monitoring. Only `EXECUTION` may set `capital_permission`; the runner never
+interprets whether a forecast or hypothesis is profitable.
+
+Every v2 job supplies an economic key composed of `domain`, `event_id`,
+`market`, `decision_stage` and timezone-aware `logical_time`. Its SHA-256
+identity is used for locking and durable attempt records. A completed operation
+is not run twice. An execution attempt that finishes ambiguously is also held
+and marked `requires_reconciliation` instead of being automatically submitted
+again.
+
+Execution jobs fail closed without a risk snapshot. Configurable kill-switch
+limits and health flags stop new positions for daily loss, drawdown, settlement
+health, internal/external balance divergence, degraded odds, unknown model or
+dataset, latency, drift and correlated exposure. `retry_action()` maps order
+states explicitly; API timeouts and unknown submissions require an external
+state query, never blind retry.
+
+Consumers can write the complete `snapshot → forecast → decision → order →
+fill → settlement` cycle with `AppendOnlyAuditLog`. Each fsynced JSONL record
+has an event ID, cycle ID, previous hash and its own hash. The chain is verified
+under a cross-process lock before appending, so corruption fails closed. Stage
+transitions are validated per cycle; multiple partial fills are supported, but
+missing, reordered or post-settlement stages are rejected.
 
 `predictor-ops provenance` verifies the installed wheel against its `RECORD` and
 prints deterministic JSON. It fails closed for editable, incomplete, or modified

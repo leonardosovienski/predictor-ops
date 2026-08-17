@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.1.0
+
+- Adiciona schema v2 com chave econômica canônica e oito tipos isolados de job.
+- Restringe permissão de capital a jobs de execução e aplica kill switch
+  fail-closed antes de abrir posições.
+- Persiste claims idempotentes; tentativas de execução ambíguas exigem
+  reconciliação e nunca são reenviadas automaticamente.
+- Adiciona política explícita por estado de ordem e trilha append-only com IDs,
+  hashes encadeados e validação da sequência operacional por ciclo.
+- Mede o timeout a partir da criação do processo e tolera bloqueios transitórios
+  do Windows sem abandonar a substituição atômica de arquivos.
+
 ## 3.0.0
 
 - `RunStatus` agora contém apenas resultados e estados operacionais: `WAITING`,
