@@ -276,9 +276,7 @@ def run_job(
                         "job_id": job.id,
                         "run_id": run_id,
                         "updated_at": utc_now(),
-                        "requires_reconciliation": bool(
-                            job.capital_permission and status is not RunStatus.SUCCEEDED
-                        ),
+                        "requires_reconciliation": bool(job.capital_permission and status is not RunStatus.SUCCEEDED),
                     },
                 )
             except Exception as exc:
