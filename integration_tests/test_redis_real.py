@@ -2,11 +2,14 @@ import multiprocessing
 import os
 import time
 
+import pytest
 from redis import Redis
 
 from predictor_ops.runtime import RedisBackend
 
-URL = os.environ["PREDICTOR_OPS_TEST_REDIS_URL"]
+URL = os.getenv("PREDICTOR_OPS_TEST_REDIS_URL")
+if not URL:
+    pytest.skip("PREDICTOR_OPS_TEST_REDIS_URL is required for real Redis integration tests", allow_module_level=True)
 
 
 def _acquire(barrier, queue, token):

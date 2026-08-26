@@ -1,5 +1,30 @@
 # Post-modernization audit evidence
 
+## Current checkout audit
+
+Observed locally on 2026-08-26 at commit `c48b0a3` (`main`). This snapshot
+supersedes the older suite counts below for the current checkout; historical
+results remain preserved for release traceability.
+
+| Gate | Environment | Result |
+|---|---|---|
+| Full v2 suite | Linux Python 3.14.7 | 80 passed; 87.87% total coverage; zero `ResourceWarning` |
+| POSIX integration | Linux Python 3.14.7 | 1 passed |
+| Redis real integration | Not configured locally | Not run; `PREDICTOR_OPS_TEST_REDIS_URL` and a real Redis service are required |
+| Ruff and format | Linux Python 3.14.7 | passed |
+| Pyright | Linux Python 3.14.7 | zero errors, warnings or informations |
+| Pre-commit | Linux | passed |
+| Lockfile and wheel | Linux | passed |
+| Dependency audit | Linux | no known vulnerabilities |
+| Secret scan | Linux | empty result set |
+| Container smoke test | Docker | passed; non-root and read-only filesystem |
+| Source provenance | Clean Git worktree | `VALIDATED` at `c48b0a3` |
+
+No historical dataset, database, odds, model artifact, prediction ledger,
+cache or report was present in the checkout. Therefore no predictive metric,
+coverage estimate, confidence interval or economic-edge claim is supported by
+this audit.
+
 ## Patch release 2.0.1: deterministic subprocess cleanup
 
 Observed locally on 2026-08-02. `ResourceWarning` was promoted to an error in every pytest invocation.
