@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "predictor-ops"
-version = "3.1.0"
+version = "4.0.0"
 description = "Portable operational runner for predictor workloads"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -15,7 +15,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-redis = ["redis>=6,<9"]
 otel = [
   "opentelemetry-api>=1.36,<2",
   "opentelemetry-sdk>=1.36,<2",
@@ -24,7 +23,6 @@ otel = [
 dev = [
   "build>=1.3",
   "coverage[toml]>=7.10",
-  "fakeredis>=2.31",
   "hatchling>=1.27",
   "pre-commit>=4.3",
   "pyright>=1.1.403",

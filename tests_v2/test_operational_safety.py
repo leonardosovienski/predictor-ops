@@ -1,11 +1,9 @@
-import json
 import sys
 from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
 
-from predictor_ops.audit import AppendOnlyAuditLog, CycleStage
 from predictor_ops.models import (
     EconomicJobKey,
     JobConfig,
@@ -101,38 +99,3 @@ def test_kill_switch_fails_closed_and_reports_all_reasons(tmp_path):
         "odds_source_degraded",
         "drift_detected",
     }
-
-
-def test_hash_chained_audit_log_detects_tampering(tmp_path):
-    path = tmp_path / "cycle.jsonl"
-    audit = AppendOnlyAuditLog(path)
-    first = audit.append(CycleStage.SNAPSHOT, {"price": 2.1}, event_id="e1", cycle_id="c1")
-    second = audit.append(CycleStage.FORECAST, {"p": 0.55}, event_id="e2", cycle_id="c1")
-    assert second["previous_hash"] == first["hash"]
-    assert audit.verify() == second["hash"]
-    lines = path.read_text().splitlines()
-    damaged = json.loads(lines[0])
-    damaged["payload"]["price"] = 9
-    lines[0] = json.dumps(damaged)
-    path.write_text("\n".join(lines) + "\n")
-    with pytest.raises(ValueError, match="broken audit chain"):
-        audit.verify()
-
-
-def test_audit_log_enforces_cycle_order_and_allows_multiple_fills(tmp_path):
-    audit = AppendOnlyAuditLog(tmp_path / "cycle.jsonl")
-    with pytest.raises(ValueError, match="invalid cycle transition"):
-        audit.append(CycleStage.ORDER, {}, event_id="e0", cycle_id="c1")
-    stages = [
-        CycleStage.SNAPSHOT,
-        CycleStage.FORECAST,
-        CycleStage.DECISION,
-        CycleStage.ORDER,
-        CycleStage.FILL,
-        CycleStage.FILL,
-        CycleStage.SETTLEMENT,
-    ]
-    for index, stage in enumerate(stages):
-        audit.append(stage, {}, event_id=f"e{index}", cycle_id="c1")
-    with pytest.raises(ValueError, match="invalid cycle transition"):
-        audit.append(CycleStage.FILL, {}, event_id="late", cycle_id="c1")

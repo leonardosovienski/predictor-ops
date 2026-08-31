@@ -3,10 +3,8 @@ import multiprocessing
 import os
 import time
 
-import fakeredis
-
 from predictor_ops.models import RuntimeConfig
-from predictor_ops.runtime import LocalBackend, RedisBackend, append_jsonl, atomic_json, backend
+from predictor_ops.runtime import LocalBackend, append_jsonl, atomic_json, backend
 
 
 def _local_racer(root, barrier, queue, token):
@@ -46,16 +44,8 @@ def test_local_lock_has_one_winner_across_processes(tmp_path):
         assert process.exitcode == 0
 
 
-def test_redis_lock_ownership_and_factory(tmp_path):
-    client = fakeredis.FakeRedis(decode_responses=True)
-    redis = RedisBackend("redis://unused", "test", client)
-    first = redis.acquire("job", "one", 60)
-    assert first.acquired and first.refresh()
-    assert not redis.acquire("job", "two", 60).acquired
-    first.release()
-    assert redis.acquire("job", "two", 60).acquired
-    config = RuntimeConfig(backend="redis", redis_url="redis://unused", root=tmp_path)
-    assert isinstance(backend(config, redis_client=client), RedisBackend)
+def test_factory_is_local_only(tmp_path):
+    assert isinstance(backend(RuntimeConfig(root=tmp_path)), LocalBackend)
 
 
 def test_atomic_json_and_durable_jsonl(tmp_path):

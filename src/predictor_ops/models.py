@@ -83,17 +83,9 @@ class RiskSnapshot(BaseModel):
 
 class RuntimeConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    backend: Literal["local", "redis"] = "local"
+    backend: Literal["local"] = "local"
     root: Path = Field(default_factory=lambda: Path.home() / ".local" / "state" / "predictor-ops")
-    redis_url: str | None = None
-    namespace: str = "predictor_ops"
     lock_stale_after_seconds: Annotated[float, Field(gt=0)] = 86_400
-
-    @model_validator(mode="after")
-    def require_redis_url(self) -> RuntimeConfig:
-        if self.backend == "redis" and not self.redis_url:
-            raise ValueError("redis_url is required for the redis backend")
-        return self
 
 
 class JobConfig(BaseModel):

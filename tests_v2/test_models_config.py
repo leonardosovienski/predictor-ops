@@ -36,7 +36,7 @@ def test_config_is_strict_and_unique(tmp_path):
         JobsFile(jobs=[JobConfig(id="x", command=["a"]), JobConfig(id="x", command=["b"])])
 
 
-def test_redis_requires_url_and_external_requires_https():
+def test_runtime_rejects_nonlocal_backend_and_external_requires_https():
     with pytest.raises(ValidationError):
         RuntimeConfig(backend="redis")
     with pytest.raises(ValueError, match="HTTPS"):

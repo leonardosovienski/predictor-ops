@@ -8,7 +8,7 @@ named `tools`.
 ## Install and use
 
 ```bash
-pip install predictor_ops-3.1.0-py3-none-any.whl
+pip install predictor_ops-4.0.0-py3-none-any.whl
 predictor-ops validate jobs.json
 predictor-ops provenance
 predictor-ops run --config jobs.json --job example-collection
@@ -16,8 +16,8 @@ predictor-ops run --job-id adhoc --command python -m my_pipeline
 ```
 
 Copy `jobs.example.json` and define operational policy outside application
-code. Unknown fields, duplicate IDs, unsafe NUL arguments and incomplete Redis
-configuration fail validation. `FileJobConfigSource` and the HTTPS-only,
+code. Unknown fields, duplicate IDs and unsafe NUL arguments fail validation.
+`FileJobConfigSource` and the HTTPS-only,
 validated `HttpJobConfigSource` implement the same typed contract.
 
 ## Reliable operational execution (schema v2)
@@ -41,13 +41,6 @@ dataset, latency, drift and correlated exposure. `retry_action()` maps order
 states explicitly; API timeouts and unknown submissions require an external
 state query, never blind retry.
 
-Consumers can write the complete `snapshot → forecast → decision → order →
-fill → settlement` cycle with `AppendOnlyAuditLog`. Each fsynced JSONL record
-has an event ID, cycle ID, previous hash and its own hash. The chain is verified
-under a cross-process lock before appending, so corruption fails closed. Stage
-transitions are validated per cycle; multiple partial fills are supported, but
-missing, reordered or post-settlement stages are rejected.
-
 `predictor-ops provenance` verifies the installed wheel against its `RECORD` and
 prints deterministic JSON. It fails closed for editable, incomplete, or modified
 installations. For development checkouts, `--source-root PATH` accepts only a clean
@@ -57,11 +50,8 @@ supply-chain gate and does not contact the network.
 ## Runtime contract
 
 Every run writes `<runtime-root>/<job-id>/heartbeat.json` atomically and appends
-a serialized, fsynced `events.jsonl` audit record. The local backend uses an
-owned filesystem lock with stale/dead-owner recovery. The optional Redis
-backend (`pip install predictor-ops[redis]`) uses `SET NX PX` and transactional
-compare-and-refresh/delete. Runtime files remain local even with Redis; Redis is
-coordination, not an audit database.
+a serialized, fsynced `events.jsonl` record. The deliberately local-only backend
+uses an owned filesystem lock with stale/dead-owner recovery.
 
 The runner preserves bounded combined stdout/stderr, timeout, whole child-tree
 termination, periodic lease refresh/heartbeat, expected-artifact checks,
@@ -85,9 +75,7 @@ There is deliberately no permanent `tools` namespace shim: consumers migrate
 from `tools.operational_runner` to `predictor_ops.run_job` or the installed CLI.
 This repository does not edit or vendor consumers. Replace workspace-relative
 health/task files with a validated jobs file supplied via deployment config.
-Keep the old Windows installers only until each scheduled command invokes
-`predictor-ops`; Linux should use its normal orchestrator (systemd, Kubernetes,
-Nomad, cron, etc.).
+Windows and Linux use their normal scheduler to invoke the same installed CLI.
 
 ## Development and release
 
@@ -102,11 +90,11 @@ uv build
 
 CI tests Python 3.13 on Linux and Windows, Python 3.14 experimentally, builds a
 wheel, installs it into a clean environment outside the checkout, runs the CLI,
-and exercises Redis via a service container. The Docker image runs non-root;
+The Docker image runs non-root;
 mount `/var/lib/predictor-ops` writable while keeping the root filesystem
 read-only.
 
 Audit and transition records are versioned under `docs/`: the 149-row legacy
 behavior matrix, removed-operations plan, compatibility guide, and observed
-Windows/Linux/Redis/container evidence. Deprecated PowerShell rollback bridges
-live only under `migration/windows` and are excluded from the wheel.
+Windows/Linux/container evidence. Version 4 removes deprecated compatibility,
+vendor-audit, hash-chain and Redis coordination surfaces.
