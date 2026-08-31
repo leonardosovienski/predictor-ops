@@ -1,4 +1,5 @@
 import json
+from typing import Any, cast
 
 import pytest
 from pydantic import ValidationError
@@ -38,7 +39,7 @@ def test_config_is_strict_and_unique(tmp_path):
 
 def test_runtime_rejects_nonlocal_backend_and_external_requires_https():
     with pytest.raises(ValidationError):
-        RuntimeConfig(backend="redis")
+        RuntimeConfig(backend=cast(Any, "redis"))
     with pytest.raises(ValueError, match="HTTPS"):
         HttpJobConfigSource("http://example.test/jobs")
 
