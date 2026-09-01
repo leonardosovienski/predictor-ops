@@ -1,5 +1,10 @@
 # predictor_ops
 
+> **Estado no ecossistema em 2026-09-01:** versão 4.0.0. Brasileirão e cripto
+> declaram esta linha; Stocks ainda não depende de Ops. Gates de edge pertencem
+> aos domínios. Ops executa `SHADOW_DECISION`, idempotência, risco e reconciliação,
+> mas nunca promove lucro nem autoriza capital por inferência.
+
 `predictor_ops` is an installable, domain-neutral operational runner for Python
 3.13+. It runs on Linux, containers and Windows without relying on a workspace
 layout, sibling repositories, `PYTHONPATH`, PowerShell, `pythonw`, or a directory
