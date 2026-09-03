@@ -100,6 +100,11 @@ class JobConfig(BaseModel):
     expected_artifact: Path | None = None
     provenance: dict[str, Any] = Field(default_factory=dict)
     provenance_mode: Literal["strict", "permissive"] = "permissive"
+    config_version: str | None = None
+    input_reference: str | None = None
+    output_reference: str | None = None
+    retry_count: Annotated[int, Field(ge=0)] = 0
+    host_or_environment: str | None = None
     scientific_state: str | None = None
     job_type: JobType | None = None
     economic_key: EconomicJobKey | None = None

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 import signal
 import subprocess
 import threading
@@ -134,6 +135,11 @@ def run_job(
         "command": redact_command(job.command, secrets),
         "cwd": str(job.cwd.resolve()) if job.cwd else None,
         "provenance": redact(job.provenance, secrets),
+        "config_version": job.config_version,
+        "input_reference": job.input_reference,
+        "output_reference": job.output_reference,
+        "retry_count": job.retry_count,
+        "host_or_environment": job.host_or_environment or platform.node() or platform.system(),
     }
     if not lock.acquired:
         record = {

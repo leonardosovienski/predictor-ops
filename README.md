@@ -81,6 +81,8 @@ from `tools.operational_runner` to `predictor_ops.run_job` or the installed CLI.
 This repository does not edit or vendor consumers. Replace workspace-relative
 health/task files with a validated jobs file supplied via deployment config.
 Windows and Linux use their normal scheduler to invoke the same installed CLI.
+Runtime, failure, monitoring and consumer ownership are consolidated in the
+[Ops 4 contract](docs/OPERATIONS_CONTRACT.md).
 
 ## Development and release
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.0.0
+
+- **Breaking:** reduz o pacote ao runtime operacional genérico e remove a camada de
+  compatibilidade 1.x, auditoria de vendors, backend Redis e assets PowerShell de
+  migração. O backend suportado nesta linha é local; scheduling permanece externo.
+- Remove `monitor_predictor_gates.ps1`, `monitor_task_health.ps1` e seus instaladores.
+  A saúde de execução/heartbeat fica nos contratos portáveis `predictor_ops.health`
+  e `predictor_ops.windows`; interpretação e promoção de gates científicos pertencem
+  aos repositórios de domínio e não ao Ops.
+- Remove consumers e nomes de domínio do runtime. Jobs passam a usar apenas identidade
+  econômica neutra, locking local, heartbeat, log durável e idempotência.
+- Mantém kill-switch fail-closed para jobs `EXECUTION`, reconciliação obrigatória para
+  resultado ambíguo, término de árvore de processos e proveniência da wheel/código.
+- Atualiza o mínimo para Python 3.13 e restringe `RuntimeConfig.backend` a `local`.
+
+Consumidores devem instalar a wheel 4.0.0, configurar cron/Task Scheduler externamente,
+observar saúde operacional pela API tipada e manter a avaliação científica no domínio.
+
 ## 3.1.0
 
 - Adiciona schema v2 com chave econômica canônica e oito tipos isolados de job.

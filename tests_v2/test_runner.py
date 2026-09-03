@@ -20,9 +20,25 @@ def job(tmp_path, code, **values):
 
 
 def test_success_provenance_and_artifacts(tmp_path):
-    result = run_job(job(tmp_path, "print('ok')", provenance={"commit": "abc"}))
+    result = run_job(
+        job(
+            tmp_path,
+            "print('ok')",
+            provenance={"commit": "abc"},
+            config_version="jobs-v4",
+            input_reference="dataset:sha256:abc",
+            output_reference="artifact:forecast-42",
+            retry_count=2,
+            host_or_environment="ci-linux",
+        )
+    )
     assert result.run_status is RunStatus.SUCCEEDED
     assert result.record["provenance"] == {"commit": "abc"}
+    assert result.record["config_version"] == "jobs-v4"
+    assert result.record["input_reference"] == "dataset:sha256:abc"
+    assert result.record["output_reference"] == "artifact:forecast-42"
+    assert result.record["retry_count"] == 2
+    assert result.record["host_or_environment"] == "ci-linux"
     assert json.loads((tmp_path / "test" / "heartbeat.json").read_text())["run_status"] == "SUCCEEDED"
     assert len((tmp_path / "test" / "events.jsonl").read_text().splitlines()) == 1
 
