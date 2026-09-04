@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.1.0
+
+- Adiciona o contrato de proveniência operacional: `JobConfig` aceita
+  `config_version`, `input_reference`, `output_reference`, `retry_count` e
+  `host_or_environment`, e o registro de auditoria do runner passa a emitir esses
+  campos (com `host_or_environment` derivado do host quando não declarado).
+- Todos os campos são opcionais e têm padrão; jobs escritos para 4.0.0 continuam
+  válidos sem alteração.
+
+Este bump corrige uma divergência de identidade: as mudanças acima já estavam em
+`main` sob a versão `4.0.0`, a mesma da wheel publicada em
+`v4.0.0` — que não as contém. `predictor-ops==4.0.0` passava a designar dois
+conteúdos diferentes conforme a origem da instalação.
+
 ## 4.0.0
 
 - **Breaking:** reduz o pacote ao runtime operacional genérico e remove a camada de
