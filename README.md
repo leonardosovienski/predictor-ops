@@ -1,7 +1,8 @@
 # predictor_ops
 
-> **Estado no ecossistema em 2026-09-01:** versão 4.0.0. Brasileirão e cripto
-> declaram esta linha; Stocks ainda não depende de Ops. Gates de edge pertencem
+> **Estado no ecossistema em 2026-09-06:** versão 4.1.0 (release `v4.1.0`,
+> 2026-09-05). Brasileirão já declara 4.1.0; cripto ainda pina 4.0.0; Stocks não
+> depende de Ops. Gates de edge pertencem
 > aos domínios. Ops executa `SHADOW_DECISION`, idempotência, risco e reconciliação,
 > mas nunca promove lucro nem autoriza capital por inferência.
 
@@ -13,7 +14,7 @@ named `tools`.
 ## Install and use
 
 ```bash
-pip install predictor_ops-4.0.0-py3-none-any.whl
+pip install predictor_ops-4.1.0-py3-none-any.whl
 predictor-ops validate jobs.json
 predictor-ops provenance
 predictor-ops run --config jobs.json --job example-collection

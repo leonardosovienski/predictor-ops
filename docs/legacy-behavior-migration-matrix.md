@@ -4,6 +4,12 @@ Generated from Git `HEAD` before the 2.0 modernization. Every one of the 149 his
 
 States: `MIGRATED`, `REPLACED`, `TRANSITIONAL`, `REMOVED_JUSTIFIED`, `BLOCKED`.
 
+> **This is a plan, not a record of completed work.** The "New test" column names
+> the intended destination of each row, which may not exist yet. As of 2026-09-06,
+> `tests_v2/test_consumer_contracts.py` — the destination of every `TRANSITIONAL`
+> consumer-contract row — has not been written. Read a `TRANSITIONAL` row as
+> "behavior still to be covered", never as "behavior covered elsewhere".
+
 | Historical test | Protected behavior | Old module | Risk | New test | New implementation | State | Rationale | Evidence |
 |---|---|---|---|---|---|---|---|---|
 | `tests/test_brasileirao_operational_entrypoint.py::test_entrypoint_builds_task_specific_wrapper_command` | Known consumer operational contract | `test_brasileirao_operational_entrypoint.py` | HIGH | `tests_v2/test_consumer_contracts.py` | `predictor_ops.compat.legacy + wheel runner` | TRANSITIONAL | Local fixtures avoid sibling clones while migration proceeds | `python -m pytest -q` |
