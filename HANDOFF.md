@@ -1,6 +1,10 @@
 # HANDOFF — predictor-ops
 
-**Estado corrente: 2026-09-01 — versão 4.0.0.**
+**Estado corrente: 2026-09-06 — versão 4.1.0.**
+
+> Não instale `predictor_ops==4.0.0`: essa versão designa dois conteúdos
+> diferentes conforme a origem (wheel `v4.0.0` sem o contrato de proveniência,
+> `main` com ele). O 4.1.0 existe para desfazer essa ambiguidade — ver CHANGELOG.
 
 `predictor-ops` é o runner operacional neutro do ecossistema. O schema v2 separa
 coleta, forecast, shadow decision, execução, settlement, reconciliação e monitoramento
