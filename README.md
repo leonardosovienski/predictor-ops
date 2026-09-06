@@ -1,8 +1,7 @@
 # predictor_ops
 
 > **Estado no ecossistema em 2026-09-06:** versão 4.1.0 (release `v4.1.0`,
-> 2026-09-05). Brasileirão já declara 4.1.0; cripto ainda pina 4.0.0; Stocks não
-> depende de Ops. Gates de edge pertencem
+> 2026-09-05). Brasileirão e cripto declaram 4.1.0; Stocks não depende de Ops. Gates de edge pertencem
 > aos domínios. Ops executa `SHADOW_DECISION`, idempotência, risco e reconciliação,
 > mas nunca promove lucro nem autoriza capital por inferência.
 
