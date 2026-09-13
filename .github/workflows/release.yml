@@ -96,10 +96,12 @@ jobs:
             --python "$isolated/venv" \
             dist/*.whl
 
+          cp scripts/validate_installed.py "$isolated/validate_installed.py"
           cd "$isolated"
 
           "$isolated/venv/bin/predictor-ops" --version
           "$isolated/venv/bin/predictor-ops" --help
+          "$isolated/venv/bin/python" validate_installed.py
 
       - name: Generate artifact attestations
         uses: actions/attest@v4

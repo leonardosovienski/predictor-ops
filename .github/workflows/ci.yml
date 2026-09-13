@@ -50,16 +50,20 @@ jobs:
           isolated="$(mktemp -d)"
           uv venv "$isolated/venv" --python "${{ matrix.python }}"
           uv pip install --python "$isolated/venv" dist/*.whl
+          cp scripts/validate_installed.py "$isolated/validate_installed.py"
           cd "$isolated"
           "$isolated/venv/bin/predictor-ops" --version
+          "$isolated/venv/bin/python" validate_installed.py
       - if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $isolated = Join-Path $env:RUNNER_TEMP "predictor-ops-smoke"
           uv venv "$isolated\venv" --python "${{ matrix.python }}"
           uv pip install --python "$isolated\venv" (Get-ChildItem dist\*.whl).FullName
+          Copy-Item scripts/validate_installed.py "$isolated/validate_installed.py"
           Set-Location $isolated
           & "$isolated\venv\Scripts\predictor-ops.exe" --version
+          & "$isolated\venv\Scripts\python.exe" validate_installed.py
 
   container:
     runs-on: ubuntu-latest
@@ -67,6 +71,7 @@ jobs:
       - uses: actions/checkout@v7
       - run: docker build --tag predictor-ops:ci .
       - run: docker run --rm --read-only --tmpfs /tmp predictor-ops:ci --version
+      - run: docker run --rm --read-only --tmpfs /tmp --tmpfs /var/lib/predictor-ops:uid=100,gid=101 --mount type=bind,src=${{ github.workspace }}/scripts/validate_installed.py,dst=/validate_installed.py,readonly --entrypoint python predictor-ops:ci /validate_installed.py
       - uses: anchore/sbom-action@v0
         with:
           image: predictor-ops:ci

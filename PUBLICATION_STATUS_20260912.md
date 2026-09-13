@@ -1,3 +1,5 @@
+> **Current stabilization candidate: 4.2.1.** See [current evidence and pending gates](docs/stabilization-20260912/REPORT.md). Earlier dated results below are historical, not validation of this candidate.
+
 # Estado de publicação e continuidade — Ops
 
 Conferência documental de 12/09/2026. Este registro complementa os protocolos científicos e substitui apenas afirmações anteriores de que o candidato ainda não teve commit/push.

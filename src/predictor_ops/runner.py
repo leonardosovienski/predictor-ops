@@ -19,7 +19,7 @@ from .observability import logger
 from .operations import economic_lock_id, kill_switch_reasons
 from .provenance import ProvenanceError, collect_provenance
 from .redaction import redact, redact_command, redact_text, sensitive_values
-from .runtime import RuntimeBackend, append_jsonl, atomic_json, backend
+from .runtime import Lock, RuntimeBackend, append_jsonl, atomic_json, backend
 
 
 def utc_now() -> str:
@@ -35,13 +35,20 @@ class RunResult:
 
 
 def _terminate_tree(process: subprocess.Popen[bytes], grace: float = 5) -> dict[str, Any]:
-    if process.poll() is not None:
-        return {"requested": False, "method": "already_exited"}
+    owned_job = getattr(process, "_ops_job", None)
+    if owned_job is not None:
+        owned_job.terminate()
+        process.wait(grace)
+        return {"requested": True, "method": "windows_job"}
     if os.name == "nt":
+        if process.poll() is not None:
+            return {"requested": False, "method": "already_exited"}
         result = subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"], capture_output=True, check=False)
         return {"requested": True, "method": "taskkill_tree", "return_code": result.returncode}
     try:
-        process_group = os.getpgid(process.pid)
+        # start_new_session makes the child's PID the owned group ID. It is
+        # still usable after the group leader exits while descendants remain.
+        process_group = process.pid
         os.killpg(process_group, signal.SIGTERM)
         with suppress(subprocess.TimeoutExpired):
             process.wait(grace)
@@ -64,15 +71,25 @@ def _drain(
     truncated: threading.Event,
     errors: list[Exception],
 ) -> None:
+    # Bound reads and retained raw data independently of newline placement.
+    # Look ahead far enough to redact a known secret crossing the capture limit.
+    lookahead = max((len(value.encode("utf-8")) for value in secrets), default=0)
+    capacity = limit + lookahead
+    captured = bytearray()
     try:
-        while chunk := stream.readline():
-            data = redact_text(chunk.decode("utf-8", errors="replace"), secrets).encode("utf-8")
-            remaining = max(0, limit - len(sink))
-            sink.extend(data[:remaining])
-            if len(data) > remaining:
+        read = getattr(stream, "read1", stream.read)
+        while chunk := read(65536):
+            remaining = max(0, capacity - len(captured))
+            captured.extend(chunk[:remaining])
+            if len(chunk) > remaining:
                 truncated.set()
     except Exception as exc:
         errors.append(exc)
+    finally:
+        data = redact_text(captured.decode("utf-8", errors="replace"), secrets).encode("utf-8")
+        sink.extend(data[:limit])
+        if len(data) > limit:
+            truncated.set()
 
 
 def _close_process_resources(
@@ -87,16 +104,17 @@ def _close_process_resources(
     if process.poll() is None:
         forced = _terminate_tree(process)
         forced["reason"] = "exception_cleanup"
+    else:
+        _terminate_tree(process)
+    owned_job = getattr(process, "_ops_job", None)
+    if owned_job is not None:
+        owned_job.close()
     with suppress(subprocess.TimeoutExpired):
         process.wait(5)
     if reader is not None:
         reader.join(5)
         if reader.is_alive():
-            # A descendant may have inherited stdout after the direct child
-            # exited. The process tree is already gone, so closing now cannot
-            # discard output that can still be produced by the owned tree.
-            if process.stdout is not None and not process.stdout.closed:
-                process.stdout.close()
+            _terminate_tree(process)
             reader.join(5)
         if reader.is_alive():
             reader_errors.append(RuntimeError("output reader did not terminate"))
@@ -116,6 +134,24 @@ def run_job(
     runtime_backend = runtime_backend or backend(job.runtime)
     lock_id = economic_lock_id(job)
     lock = runtime_backend.acquire(lock_id, run_id, job.runtime.lock_stale_after_seconds)
+    try:
+        return _run_locked(job, shutdown, started_mono, started_at, run_id, environment, secrets, lock_id, lock)
+    finally:
+        if lock.acquired:
+            lock.release()
+
+
+def _run_locked(
+    job: JobConfig,
+    shutdown: threading.Event | None,
+    started_mono: float,
+    started_at: str,
+    run_id: str,
+    environment: dict[str, str],
+    secrets: tuple[str, ...],
+    lock_id: str,
+    lock: Lock,
+) -> RunResult:
     job_root = job.runtime.root / job.id
     heartbeat, events = job_root / "heartbeat.json", job_root / "events.jsonl"
     idempotency_record = job.runtime.root / "idempotency" / f"{lock_id}.json"
@@ -123,7 +159,7 @@ def run_job(
         "schema_version": "1",
         "service": "predictor_ops",
         "library_version": __version__,
-        "job_id": job.id,
+        "job_id": redact_text(job.id, secrets),
         "job_type": job.job_type,
         "economic_key": job.economic_key.model_dump(mode="json") if job.economic_key else None,
         "economic_lock_id": lock_id,
@@ -141,6 +177,7 @@ def run_job(
         "retry_count": job.retry_count,
         "host_or_environment": job.host_or_environment or platform.node() or platform.system(),
     }
+    base = redact(base, secrets)
     if not lock.acquired:
         record = {
             **base,
@@ -163,11 +200,10 @@ def run_job(
                 "run_status": RunStatus.SKIPPED,
                 "finished_at": utc_now(),
                 "reason": "economic_operation_already_claimed",
-                "previous_attempt": previous_attempt,
+                "previous_attempt": redact(previous_attempt, secrets),
             }
             atomic_json(job_root / f"skipped.{run_id}.json", record)
             append_jsonl(events, record)
-            lock.release()
             return RunResult(run_id, RunStatus.SKIPPED, 0, record)
 
     kill_reasons = kill_switch_reasons(job)
@@ -181,13 +217,12 @@ def run_job(
         }
         atomic_json(job_root / f"skipped.{run_id}.json", record)
         append_jsonl(events, record)
-        lock.release()
         return RunResult(run_id, RunStatus.SKIPPED, 0, record)
 
     if job.economic_key is not None:
         atomic_json(
             idempotency_record,
-            {"state": "IN_PROGRESS", "job_id": job.id, "run_id": run_id, "claimed_at": utc_now()},
+            {"state": "IN_PROGRESS", "job_id": redact_text(job.id, secrets), "run_id": run_id, "claimed_at": utc_now()},
         )
 
     stop = shutdown or threading.Event()
@@ -207,15 +242,27 @@ def run_job(
             "stderr": subprocess.STDOUT,
         }
         if os.name == "nt":
-            popen_args["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | getattr(
-                subprocess, "CREATE_NO_WINDOW", 0
-            )
+            popen_args["creationflags"] = (
+                subprocess.CREATE_NEW_PROCESS_GROUP | getattr(subprocess, "CREATE_NO_WINDOW", 0) | 0x00000004
+            )  # CREATE_SUSPENDED: contain before user code runs.
         else:
             popen_args["start_new_session"] = True
         spawned = cast("subprocess.Popen[bytes]", subprocess.Popen(job.command, **popen_args))
         process = spawned
+        if os.name == "nt":
+            from .processes import WindowsJob
+
+            owned_job = WindowsJob()
+            try:
+                owned_job.attach_and_resume(spawned.pid)
+            except BaseException:
+                spawned.kill()
+                spawned.wait(5)
+                owned_job.close()
+                raise
+            spawned._ops_job = owned_job  # type: ignore[attr-defined]
         record.update(run_status=RunStatus.WAITING, pid=spawned.pid)
-        atomic_json(heartbeat, record)
+        atomic_json(heartbeat, redact(record, secrets))
         reader = threading.Thread(
             target=_drain,
             args=(spawned.stdout, output, secrets, job.max_output_bytes, truncated, reader_errors),
@@ -239,7 +286,7 @@ def run_job(
                     status, exit_code = RunStatus.FAILED, 75
                     break
                 record["heartbeat_at"] = utc_now()
-                atomic_json(heartbeat, record)
+                atomic_json(heartbeat, redact(record, secrets))
                 next_heartbeat = now + job.heartbeat_interval_seconds
             time.sleep(min(0.1, job.heartbeat_interval_seconds))
         spawned.wait()
@@ -279,7 +326,7 @@ def run_job(
                     idempotency_record,
                     {
                         "state": status,
-                        "job_id": job.id,
+                        "job_id": redact_text(job.id, secrets),
                         "run_id": run_id,
                         "updated_at": utc_now(),
                         "requires_reconciliation": bool(job.capital_permission and status is not RunStatus.SUCCEEDED),
@@ -288,19 +335,18 @@ def run_job(
             except Exception as exc:
                 persistence_errors.append(exc)
         try:
-            atomic_json(heartbeat, record)
+            atomic_json(heartbeat, redact(record, secrets))
         except Exception as exc:
             persistence_errors.append(exc)
         try:
             append_jsonl(events, record)
         except Exception as exc:
             persistence_errors.append(exc)
-        lock.release()
         logger().info(
             "job_finished",
             extra={
                 "fields": {
-                    "job_id": job.id,
+                    "job_id": redact_text(job.id, secrets),
                     "run_id": run_id,
                     "run_status": status,
                     "duration_ms": record["duration_ms"],

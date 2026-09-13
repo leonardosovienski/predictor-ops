@@ -1,3 +1,5 @@
+> **Current stabilization candidate: 4.2.1.** See [current evidence and pending gates](docs/stabilization-20260912/REPORT.md). Earlier dated results below are historical, not validation of this candidate.
+
 # predictor_ops
 
 <!-- DOC-SYNC-20260912 -->
