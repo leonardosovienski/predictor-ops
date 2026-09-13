@@ -38,3 +38,43 @@ Operational installation: not updated. Isolated package validation is not deploy
 ## Delivery gates
 
 Do not delete branches while any mandatory final gate or required published-artifact validation remains pending. No branch has been removed. Git main publication and exact SHA verification remain pending until candidate validation.
+
+## Resultados de execução do candidato
+
+Estado por escopo, sem extrapolar para instalação operacional:
+
+| Verificação | Ambiente / revisão | Comando / percurso | Resultado | Evidência |
+|---|---|---|---|---|
+| Regressões antes da correção | Windows / base 4392782 | pytest test_stabilization.py | FALHOU: lock, redação, memória e descendente | regressions-before.txt; descendant-before.txt |
+| Runner, concorrência, lock, risco e reexecução | Windows / candidato | python -W error::ResourceWarning -m pytest --cov | VALIDADO: 87 testes; 85,92% cobertura local | log local final-source-tests.log; CI correspondente é autoridade para revisão final |
+| Matriz e wheel instalado | CI d436fcaa535f787b8c3aef0754b33c3e867bb8cc | CI 34732862130, quatro jobs originais | VALIDADO: Linux 3.13/3.14, Windows 3.13, container | jobs 103658790852, 103658790866, 103658790884, 103658790973 |
+| Registry real, sem mocks | Linux / mesmos fontes e SHAs fixados no script | scripts/validate_consumers.py -> checker vigente do Ecosystem | VALIDADO: três plugins distintos, contratos válidos, capital FORBIDDEN | consumer-contracts-candidate.json; job 103658790915 |
+| Crypto instalado | Windows, Crypto 1.1.0 / Ops wheel candidato 4.2.1 | jobs.main(phase1) com lock próprio; jobs.main(watchdog) com SQLite sintético | VALIDADO: SKIPPED Ops 0 / wrapper 3; SUCCEEDED 0; FAILED 1 | C:/CRIPTO/work/ops-final-20260912/probe.py e integration-full.log |
+| Brasileirão instalado | Windows, 0.2.0 / Ops wheel candidato 4.2.1 | sombra_diaria.main --check, duas execuções | VALIDADO: Ops SUCCEEDED, payload AVAILABLE_NOT_EXECUTED, heartbeat e eventos | C:/BRASILEIRAO/work/ops-final-20260912/probe.py e integration.log |
+| Artefato reutilizável | wheel isolado | scripts/validate_installed.py, duas execuções | VALIDADO: reutilização sem alterar conteúdo | C:/PREDICTORS/work/ops-final-20260912/wheel-validation.log |
+| CAIN -> Ops direto | CAIN a495bdd / instalação 0.4.8 | inspeção src/cain/research/bundles.py e dependências | NÃO APLICÁVEL: consumidor usa research_bundle.validate/transfer; não importa nem exige Ops | inventory.json; nenhuma base real usada como fixture |
+| Stocks/Core -> Ops direto | revisões em inventory.json | dependências e imports runtime | NÃO APLICÁVEL: sem dependência direta; Stocks plugin exercitado no Linux | consumer-contracts-candidate.json |
+
+O wheel Windows inicial (fonte 81395b0) teve SHA256 c8bb4626d5e2f3ae26d72890fa10dca60c54df9749a47a1442fa47f5083b0121. A correção posterior de tipos por plataforma exige testar o artefato efetivamente publicado; esse hash local não é atribuído à release.
+
+As instalações locais de consumidores acima têm apenas as dependências do percurso exercitado. A instalação Linux dos três consumidores usa resolução integral das dependências declaradas e o checker original de proveniência e contratos. A primeira tentativa com uv foi recusada por ausência de hashes em direct_url.json; o ensaio passou com pip, que registra o SHA256 do arquivo. O checker não foi relaxado nem substituído.
+
+## Observação operacional passiva
+
+- Crypto: CRIPTO.cmd aponta para pesquisa-20260909/.venv, que continua com Ops **4.2.0**, confirmado por importlib.metadata. Não foi atualizado por esta tarefa.
+- Brasileirão: o instalador versionado aponta para .venv/Scripts/predictor-ops.exe, mas esse ambiente não existe no checkout canônico acessível. Instalação operacional desse percurso: BLOQUEADO por ausência do ambiente configurado. O launcher passivo não importa Ops e não foi migrado.
+- CAIN: instalação principal .venv contém cain-research 0.4.8, research-bundle 1.0.0 e snapshot 1.0.1, sem Ops. Alterações preexistentes no código e no teste de contexto recente foram preservadas.
+- Consulta Get-ScheduledTask pelos nomes cripto/brasileirao/garimpo/cain não encontrou operações desses domínios. Isso não prova ausência de outros agendadores ou instalações fora do escopo acessível.
+- O timeout do teste original do Windows deixou sua tarefa sintética predictor-ops-ci-5fdabbfce04848c3ac3fc1b74bf8dd34. A identidade foi confirmada por ação cmd.exe /c exit 7, timestamps coincidentes com o teste e trigger de 23:51:38. Somente essa tarefa de teste foi removida; a consulta posterior confirmou ausência.
+
+Nenhuma implantação, ativação operacional, API paga, ordem, migração ou escrita em banco real foi executada.
+
+## Segurança e gates do GitHub
+
+A API da branch main confirmou protected=false e nenhum required_status_check. Mesmo assim todos os gates de CI existentes foram mantidos e continuam critérios desta entrega. Dependency Review e CodeQL passaram no PR. A análise automática adicional "Code scanning AI findings" falhou no serviço com HTTP 400 "The requested model is not supported"; não produziu revisão aprovada. É uma limitação externa registrada, não um alerta de código corrigido nem um gate dispensado para conseguir merge.
+
+## Reconciliação semântica das branches
+
+Além de git cherry, foram conferidos os destinos: CLI provenance e testes de integridade para expose-provenance; Dockerfile sem ferramentas vulneráveis para harden-runtime-image; piso de valores sensíveis e sua regressão para ecosystem-audit; registro histórico de Crypto 4.1 para auditoria-projetos. project-testing-validation contém versão/lock 4.1 e .gitattributes idêntico: a versão vigente é superior e o changelog 4.1 permanece. architecture/complete é ancestral. Os dois commits de validation/retest-six alteram somente documentação e integram a ancestralidade da entrega, mantendo o contexto histórico.
+
+Nenhuma branch foi removida nesta fase. Publicação 4.2.1, verificações pós-publicação e limpeza aguardam os gates da revisão consolidada.

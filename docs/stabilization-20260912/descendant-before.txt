@@ -1,0 +1,35 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+______ test_exited_parent_with_inherited_stdout_is_bounded_and_isolated _______
+
+tmp_path = WindowsPath('C:/Users/leona/AppData/Local/Temp/pytest-of-leona/pytest-197/test_exited_parent_with_inheri0')
+
+    def test_exited_parent_with_inherited_stdout_is_bounded_and_isolated(tmp_path):
+        marker = tmp_path / "descendant-started"
+        child = f"from pathlib import Path; import time; Path({str(marker)!r}).touch(); time.sleep(12)"
+        parent = (
+            "import subprocess,sys,time; from pathlib import Path; "
+            f"subprocess.Popen([sys.executable,'-c',{child!r}]); "
+            f"p=Path({str(marker)!r}); "
+            "exec('while not p.exists(): time.sleep(0.01)')"
+        )
+        foreign = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+        try:
+            started = time.monotonic()
+            result = runner.run_job(JobConfig(
+                id="orphan", command=[sys.executable, "-c", parent],
+                runtime=RuntimeConfig(root=tmp_path / "runtime"), heartbeat_interval_seconds=0.02,
+            ))
+            elapsed = time.monotonic() - started
+            assert result.exit_code == 0
+            assert marker.exists()
+>           assert elapsed < 8, elapsed
+E           AssertionError: 12.43487249998725
+E           assert 12.43487249998725 < 8
+
+..\work\ops-final-20260912\candidate\tests_v2\test_stabilization.py:98: AssertionError
+---------------------------- Captured stdout call -----------------------------
+{"duration_ms": 12392, "event": "job_finished", "job_id": "orphan", "level": "INFO", "run_id": "d56733e4820248119562cbe2aab2ee97", "run_status": "SUCCEEDED", "service": "predictor_ops", "timestamp": "2026-09-13T01:53:50.031756Z"}
+=========================== short test summary info ===========================
+FAILED ..\work\ops-final-20260912\candidate\tests_v2\test_stabilization.py::test_exited_parent_with_inherited_stdout_is_bounded_and_isolated
+1 failed, 4 deselected in 13.17s
