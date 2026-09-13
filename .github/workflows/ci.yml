@@ -8,6 +8,23 @@ permissions:
   contents: read
 
 jobs:
+  consumer-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.1"
+      - run: uv python install 3.13
+      - run: uv run --no-project --python 3.13 python scripts/validate_consumers.py
+        env:
+          CONSUMER_RECEIPT: ${{ runner.temp }}/consumer-receipt.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: consumer-contracts-${{ github.sha }}
+          path: ${{ runner.temp }}/consumer-receipt.json
+          if-no-files-found: error
+
   test:
     strategy:
       fail-fast: false
