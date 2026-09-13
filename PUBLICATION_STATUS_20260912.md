@@ -1,3 +1,5 @@
+> **Implantação local em 13/09/2026:** Ops 4.2.1 instalado e validado nos ambientes de Cripto e Brasileirão. [Recibo, testes e recuperação](docs/DEPLOYMENT_20260913.md). Agendamentos não ativados.
+
 > **Fechamento em 13/09/2026:** branches ativas do Ops consolidadas em `main`; oito remotas e três locais removidas com backups verificados. [Recibo e CI](docs/stabilization-20260912/REPORT.md#fechamento-git-e-ci--2026-09-13).
 
 > **Ops 4.2.1 publicado e validado.** [Release](https://github.com/leonardosovienski/predictor-ops/releases/tag/v4.2.1), [evidências atuais e limites operacionais](docs/stabilization-20260912/REPORT.md). Fonte da release: `ddd91444282569ae8282e7c96e0ec372ef4e5144`. Os registros datados abaixo são históricos; instalação operacional não foi atualizada.

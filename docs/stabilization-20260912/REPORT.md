@@ -1,3 +1,5 @@
+> **Etapa posterior:** [implantação local de 13/09/2026](../DEPLOYMENT_20260913.md) concluída após nova autorização. A observação operacional abaixo registra o estado anterior à implantação.
+
 # Ops stabilization — 2026-09-12
 
 Status: VALIDADO — 4.2.1 published, installed integrations passed and Git cleanup completed. Only main remains among active local and remote Ops branches. This report supersedes current-state claims in earlier dated handoffs without rewriting historical evidence.
