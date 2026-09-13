@@ -1,0 +1,122 @@
+{
+  "time_utc": "2026-09-13T03:01:05.0757789Z",
+  "main_at_cleanup": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+  "removed_remote_branches": [
+    {
+      "branch": "agent/expose-provenance-verification",
+      "sha": "ce257df8ba0e020d63a81499367c13bb341219af",
+      "main_compared": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+      "patches": [
+        "- ae18156132d585bf16eae475f99be658d506e9bf"
+      ],
+      "decision": "equivalent patches",
+      "recovery": "ops-before.bundle refs/remotes/origin/agent/expose-provenance-verification",
+      "status": "VALIDADO",
+      "deletion_exit_code": 0
+    },
+    {
+      "branch": "agent/harden-runtime-image",
+      "sha": "baeef4fbfaa5b41c2afd8030e7978600a77e502d",
+      "main_compared": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+      "patches": [
+        "- baeef4fbfaa5b41c2afd8030e7978600a77e502d"
+      ],
+      "decision": "equivalent patches",
+      "recovery": "ops-before.bundle refs/remotes/origin/agent/harden-runtime-image",
+      "status": "VALIDADO",
+      "deletion_exit_code": 0
+    },
+    {
+      "branch": "architecture/complete-20260911",
+      "sha": "6ab3069cce6720460a1a60211263dafbfd5b845e",
+      "main_compared": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+      "patches": [],
+      "decision": "already incorporated",
+      "recovery": "ops-before.bundle refs/remotes/origin/architecture/complete-20260911",
+      "status": "VALIDADO",
+      "deletion_exit_code": 0
+    },
+    {
+      "branch": "claude/auditoria-projetos-esr8na",
+      "sha": "36c032e65dc94410aded88cfb4e7458a34c950c8",
+      "main_compared": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+      "patches": [
+        "- 36c032e65dc94410aded88cfb4e7458a34c950c8"
+      ],
+      "decision": "equivalent patches",
+      "recovery": "ops-before.bundle refs/remotes/origin/claude/auditoria-projetos-esr8na",
+      "status": "VALIDADO",
+      "deletion_exit_code": 0
+    },
+    {
+      "branch": "claude/predictor-ecosystem-audit-srpwl3",
+      "sha": "307df1b2baecd4bd5d4f5651424d8a2daa91751c",
+      "main_compared": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+      "patches": [
+        "- 307df1b2baecd4bd5d4f5651424d8a2daa91751c"
+      ],
+      "decision": "equivalent patches",
+      "recovery": "ops-before.bundle refs/remotes/origin/claude/predictor-ecosystem-audit-srpwl3",
+      "status": "VALIDADO",
+      "deletion_exit_code": 0
+    },
+    {
+      "branch": "claude/project-testing-validation-6p6nt1",
+      "sha": "1512a1093391542f90683e8d610293539a99e6cc",
+      "main_compared": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+      "patches": [
+        "+ a9ebb275f0c5386010f57ac29bb0744cbad9f479",
+        "+ 1512a1093391542f90683e8d610293539a99e6cc"
+      ],
+      "decision": "equivalent current behavior: .gitattributes identical; package and lock already 4.2.0; historical 4.1.0 changelog retained",
+      "recovery": "ops-before.bundle refs/remotes/origin/claude/project-testing-validation-6p6nt1",
+      "status": "VALIDADO",
+      "deletion_exit_code": 0
+    },
+    {
+      "branch": "validation/retest-six-20260911",
+      "sha": "4392782b231364a9394dae04a57cad2c0bf73ef1",
+      "main_compared": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+      "patches": [],
+      "decision": "integrated as candidate ancestor; two historical documentation commits retained and superseded by current report",
+      "recovery": "ops-before.bundle refs/remotes/origin/validation/retest-six-20260911",
+      "status": "VALIDADO",
+      "deletion_exit_code": 0
+    },
+    {
+      "branch": "stabilization/final-20260912",
+      "sha": "83c76b0fb331c63e070ee5f545e60c924c8fd075",
+      "main_compared": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+      "patches": [],
+      "decision": "merged through PR 23; ancestor of final main",
+      "recovery": "ops-pre-cleanup.bundle refs/remotes/origin/stabilization/final-20260912",
+      "status": "VALIDADO",
+      "deletion_exit_code": 0
+    }
+  ],
+  "removed_local_branches": [
+    "architecture/complete-20260911",
+    "validation/retest-six-20260911",
+    "stabilization/final-20260912"
+  ],
+  "remaining_remote_heads": [
+    "7266a20583e08c6c6e121882c03c9c2bd17c5d4f\trefs/heads/main"
+  ],
+  "remaining_local_branches": [
+    "main"
+  ],
+  "worktrees": [
+    "worktree C:/PREDICTORS/predictor-ops",
+    "HEAD 7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+    "branch refs/heads/main",
+    "",
+    "worktree C:/PREDICTORS/work/ops-final-20260912/candidate",
+    "HEAD ddd91444282569ae8282e7c96e0ec372ef4e5144",
+    "detached",
+    ""
+  ],
+  "preserved_backups": [
+    "C:/PREDICTORS/work/ops-final-20260912/ops-before.bundle",
+    "C:/PREDICTORS/work/ops-final-20260912/ops-pre-cleanup.bundle"
+  ]
+}

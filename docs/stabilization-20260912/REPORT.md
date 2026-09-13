@@ -1,6 +1,6 @@
 # Ops stabilization — 2026-09-12
 
-Status: 4.2.1 published and validated; source/installed integrations passed. Final Git cleanup receipt follows after the last delivery gates. This report supersedes current-state claims in earlier dated handoffs without rewriting historical evidence.
+Status: VALIDADO — 4.2.1 published, installed integrations passed and Git cleanup completed. Only main remains among active local and remote Ops branches. This report supersedes current-state claims in earlier dated handoffs without rewriting historical evidence.
 
 ## Base and preservation
 
@@ -35,7 +35,7 @@ CAIN, Core and Stocks: no direct Ops import observed in inspected runtime source
 
 Operational installation: not updated. Isolated package validation is not deployment, scientific validation or authorization to use capital.
 
-## Delivery gates
+## Delivery gates — historical pre-publication checkpoint
 
 Do not delete branches while any mandatory final gate or required published-artifact validation remains pending. No branch has been removed. Git main publication and exact SHA verification remain pending until candidate validation.
 
@@ -73,7 +73,7 @@ Nenhuma implantação, ativação operacional, API paga, ordem, migração ou es
 
 A API da branch main confirmou protected=false e nenhum required_status_check. Mesmo assim todos os gates de CI existentes foram mantidos e continuam critérios desta entrega. Dependency Review e CodeQL passaram no PR. A análise automática adicional "Code scanning AI findings" falhou no serviço com HTTP 400 "The requested model is not supported"; não produziu revisão aprovada. É uma limitação externa registrada, não um alerta de código corrigido nem um gate dispensado para conseguir merge.
 
-## Reconciliação semântica das branches
+## Reconciliação semântica das branches — registro anterior à publicação
 
 Além de git cherry, foram conferidos os destinos: CLI provenance e testes de integridade para expose-provenance; Dockerfile sem ferramentas vulneráveis para harden-runtime-image; piso de valores sensíveis e sua regressão para ecosystem-audit; registro histórico de Crypto 4.1 para auditoria-projetos. project-testing-validation contém versão/lock 4.1 e .gitattributes idêntico: a versão vigente é superior e o changelog 4.1 permanece. architecture/complete é ancestral. Os dois commits de validation/retest-six alteram somente documentação e integram a ancestralidade da entrega, mantendo o contexto histórico.
 
@@ -94,3 +94,15 @@ Receitas e resultados por job/step estão em `delivery-ci.json`; a aceitação d
 A consulta de operação permanece separada: Crypto usa Ops 4.2.0 na .venv operacional; Brasileirão sem ambiente configurado acessível; CAIN sem dependência Ops. Os checkouts de fonte dos consumidores foram avançados por fast-forward, mas isso não instalou bibliotecas neles.
 
 Backup pré-limpeza: `C:/PREDICTORS/work/ops-final-20260912/ops-pre-cleanup.bundle`, SHA256 `d9ad942062704a80a59a27f44b0b2815513454e47731298e5502674bd82b3b3c`. Verificação, clone espelho em `recovery-final.git` e fsck passaram. Contém todas as 23 referências Git relevantes da fase de release, incluindo as pontas das branches e a tag nova. Os espelhos de recuperação mantêm referências históricas deliberadamente; não são checkouts de desenvolvimento a limpar.
+
+## Fechamento Git e CI — 2026-09-13
+
+**Consolidação: VALIDADO.** A main `7266a20583e08c6c6e121882c03c9c2bd17c5d4f` passou nos cinco jobs da CI [34734192456](https://github.com/leonardosovienski/predictor-ops/actions/runs/34734192456) e no CodeQL antes da limpeza. Ecosystem `96da7bfeb8493f0d80032ede7e9e02560f0eb953` passou nos onze jobs da CI [34734098243](https://github.com/leonardosovienski/ecosystem-predictor/actions/runs/34734098243) e na regressão de segurança do histórico [34734098235](https://github.com/leonardosovienski/ecosystem-predictor/actions/runs/34734098235). SHAs e jobs constam de `closing-ci.json`.
+
+Oito branches remotas removidas: `agent/expose-provenance-verification`, `agent/harden-runtime-image`, `architecture/complete-20260911`, `claude/auditoria-projetos-esr8na`, `claude/predictor-ecosystem-audit-srpwl3`, `claude/project-testing-validation-6p6nt1`, `validation/retest-six-20260911` e `stabilization/final-20260912`. Três branches locais removidas com `git branch -d`: architecture, validation e stabilization acima. Cada ponta remota foi consultada novamente e comparada ao SHA revisado; a exclusão usou lease explícita no SHA para recusar mudanças concorrentes. Nenhuma main foi forçada; nenhuma tag/release foi removida.
+
+`git-cleanup.json` registra ponta, decisão, comparação com a main, referência recuperável e saída zero de cada exclusão. A consulta posterior `git ls-remote --heads origin` retornou somente `refs/heads/main`; `git branch` retornou somente main. O worktree candidato continua preservado em HEAD destacado `ddd91444282569ae8282e7c96e0ec372ef4e5144`, assim como os dois bundles e espelhos históricos. Os espelhos conservam branches para recuperação, não como desenvolvimento ativo. Não se excluíram pastas nem trabalho local.
+
+**Limite da repetição online:** o drift OFFLINE+ONLINE passou na reconciliação dos registries. Uma repetição posterior foi BLOQUEADA por HTTP 403 de rate limit na API GitHub ao consultar Core; isso não é novo desvio semântico nem aprovação dessa repetição. A checagem OFFLINE foi repetida no checkout final e passou. Os jobs de compatibilidade, plugins reais e seis wheels publicados do Ecosystem final também passaram.
+
+O commit que publica este recibo altera apenas documentação. Sua CI deve ser consultada pelo SHA da main entregue; o resultado final e a igualdade local/remoto são conferidos após o push. A identidade imutável do pacote permanece na tag v4.2.1, fonte ddd9144 e hash integral acima. Operação continua sem implantação; nenhuma conclusão econômica ou científica decorre destes gates de engenharia.

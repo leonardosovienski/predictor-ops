@@ -1,0 +1,139 @@
+[
+  {
+    "repo": "predictor-ops",
+    "id": 34734192456,
+    "jobs": [
+      {
+        "id": 103662498029,
+        "name": "container",
+        "head_sha": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662498064,
+        "name": "test (ubuntu-latest, 3.14)",
+        "head_sha": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662498075,
+        "name": "test (windows-latest, 3.13)",
+        "head_sha": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662498078,
+        "name": "consumer-contracts",
+        "head_sha": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662498141,
+        "name": "test (ubuntu-latest, 3.13)",
+        "head_sha": "7266a20583e08c6c6e121882c03c9c2bd17c5d4f",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  {
+    "repo": "ecosystem-predictor",
+    "id": 34734098243,
+    "jobs": [
+      {
+        "id": 103662237853,
+        "name": "quality (3.13, false)",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662237923,
+        "name": "Seven-project immutable compatibility manifest",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662237936,
+        "name": "research-bundle (3.12)",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662237938,
+        "name": "secrets",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662237955,
+        "name": "Three real plugins installed together",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662237967,
+        "name": "research-bundle (3.11)",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662237974,
+        "name": "research-bundle (3.13)",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662237978,
+        "name": "Standalone exporter and snapshot contract",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662238018,
+        "name": "research-bundle (3.14)",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662238021,
+        "name": "Six published wheels with exact hashes",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 103662238026,
+        "name": "quality (3.14, true)",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  {
+    "repo": "ecosystem-predictor",
+    "id": 34734098235,
+    "jobs": [
+      {
+        "id": 103662237836,
+        "name": "historical-scan",
+        "head_sha": "96da7bfeb8493f0d80032ede7e9e02560f0eb953",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  }
+]
