@@ -1,0 +1,1874 @@
+[
+  {
+    "repository": "predictor-ops",
+    "run_id": 34733345409,
+    "sha": "ddd91444282569ae8282e7c96e0ec372ef4e5144",
+    "url": "https://github.com/leonardosovienski/predictor-ops/actions/runs/34733345409",
+    "jobs": [
+      {
+        "id": 103660131618,
+        "name": "consumer-contracts",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv python install 3.13",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run --no-project --python 3.13 python scripts/validate_consumers.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660131661,
+        "name": "test (ubuntu-latest, 3.13)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv python install 3.13",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv sync --python 3.13 --all-extras",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff check .",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff format --check .",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run pyright",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python -W error::ResourceWarning -m pytest --cov --cov-report=term-missing",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python -W error::ResourceWarning -m pytest windows_integration -q",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Run uv run python -W error::ResourceWarning -m pytest posix_integration -q",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uvx pip-audit",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uvx detect-secrets scan --only-verified --all-files --exclude-files 'uv.lock|dist/|.git/|.venv/' > /tmp/secrets.json",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv build",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run isolated=\"$(mktemp -d)\"",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run $isolated = Join-Path $env:RUNNER_TEMP \"predictor-ops-smoke\"",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660131670,
+        "name": "container",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker build --tag predictor-ops:ci .",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker run --rm --read-only --tmpfs /tmp predictor-ops:ci --version",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker run --rm --read-only --tmpfs /tmp --tmpfs /var/lib/predictor-ops:uid=100,gid=101 --mount type=bind,src=/scripts/validate_installed.py,dst=/validate_installed.py,readonly --entrypoint python predictor-ops:ci /validate_installed.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run anchore/sbom-action@v0",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660131697,
+        "name": "test (ubuntu-latest, 3.14)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv python install 3.14",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv sync --python 3.14 --all-extras",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff check .",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff format --check .",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run pyright",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python -W error::ResourceWarning -m pytest --cov --cov-report=term-missing",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python -W error::ResourceWarning -m pytest windows_integration -q",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Run uv run python -W error::ResourceWarning -m pytest posix_integration -q",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uvx pip-audit",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Run uvx detect-secrets scan --only-verified --all-files --exclude-files 'uv.lock|dist/|.git/|.venv/' > /tmp/secrets.json",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Run uv build",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run isolated=\"$(mktemp -d)\"",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run $isolated = Join-Path $env:RUNNER_TEMP \"predictor-ops-smoke\"",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660131702,
+        "name": "test (windows-latest, 3.13)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv python install 3.13",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv sync --python 3.13 --all-extras",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff check .",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff format --check .",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run pyright",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python -W error::ResourceWarning -m pytest --cov --cov-report=term-missing",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python -W error::ResourceWarning -m pytest windows_integration -q",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python -W error::ResourceWarning -m pytest posix_integration -q",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Run uvx pip-audit",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Run uvx detect-secrets scan --only-verified --all-files --exclude-files 'uv.lock|dist/|.git/|.venv/' > /tmp/secrets.json",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Run uv build",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run isolated=\"$(mktemp -d)\"",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Run $isolated = Join-Path $env:RUNNER_TEMP \"predictor-ops-smoke\"",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "repository": "predictor-ops",
+    "run_id": 34733366187,
+    "sha": "ddd91444282569ae8282e7c96e0ec372ef4e5144",
+    "url": "https://github.com/leonardosovienski/predictor-ops/actions/runs/34733366187",
+    "jobs": [
+      {
+        "id": 103660200179,
+        "name": "Build and validate package",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Checkout repository",
+            "conclusion": "success"
+          },
+          {
+            "name": "Set up uv",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install Python",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install dependencies",
+            "conclusion": "success"
+          },
+          {
+            "name": "Validate tag against project version",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run Ruff",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run Pyright",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run tests",
+            "conclusion": "success"
+          },
+          {
+            "name": "Audit dependencies",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build package",
+            "conclusion": "success"
+          },
+          {
+            "name": "Test wheel in isolated environment",
+            "conclusion": "success"
+          },
+          {
+            "name": "Generate artifact attestations",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload package artifact",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Set up uv",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Checkout repository",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660275772,
+        "name": "Publish GitHub Release",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Download package artifact",
+            "conclusion": "success"
+          },
+          {
+            "name": "Create or update GitHub Release",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660303509,
+        "name": "verify-published (ubuntu-latest, 3.14)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv python install 3.14",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run --no-project --python 3.14 python scripts/validate_published.py https://github.com/leonardosovienski/predictor-ops/releases/download/v4.2.1",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run --no-project --python 3.13 python scripts/validate_consumers.py",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660303521,
+        "name": "verify-published (windows-latest, 3.13)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv python install 3.13",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run --no-project --python 3.13 python scripts/validate_published.py https://github.com/leonardosovienski/predictor-ops/releases/download/v4.2.1",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run --no-project --python 3.13 python scripts/validate_consumers.py",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7",
+            "conclusion": "skipped"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660303554,
+        "name": "verify-published (ubuntu-latest, 3.13)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv python install 3.13",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run --no-project --python 3.13 python scripts/validate_published.py https://github.com/leonardosovienski/predictor-ops/releases/download/v4.2.1",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run --no-project --python 3.13 python scripts/validate_consumers.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "repository": "cripto-predictor",
+    "run_id": 34733559933,
+    "sha": "59f6cf80d4a95153efa159c8b6e0d7d5e7f540ff",
+    "url": "https://github.com/leonardosovienski/cripto-predictor/actions/runs/34733559933",
+    "jobs": [
+      {
+        "id": 103660775828,
+        "name": "container",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker/setup-buildx-action@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run anchore/sbom-action@v0",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker build --tag cripto-predictor:test .",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker run --rm --read-only --tmpfs /tmp --cap-drop ALL cripto-predictor:test --help",
+            "conclusion": "success"
+          },
+          {
+            "name": "Empty installed store must fail without network",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run docker/setup-buildx-action@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660775911,
+        "name": "all-extras",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv sync --locked --all-extras",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv build",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run coverage run --rcfile=coverage-runtime.ini -m pytest -q",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run coverage report --rcfile=coverage-runtime.ini",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660775943,
+        "name": "python-314-experimental",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv sync --extra test --extra science",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv build",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run pytest -q",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660775970,
+        "name": "quality",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv sync --locked --extra test --extra science",
+            "conclusion": "success"
+          },
+          {
+            "name": "Preserve frozen OSS evidence bytes",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff check .",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff format --check --diff .",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run pyright",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python scripts/scan_secrets.py .",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv build",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run pytest --cov=GarimpoInvestimentos --cov-report=term-missing",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Contract test installed wheels outside checkout",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "repository": "cripto-predictor",
+    "run_id": 34733559905,
+    "sha": "59f6cf80d4a95153efa159c8b6e0d7d5e7f540ff",
+    "url": "https://github.com/leonardosovienski/cripto-predictor/actions/runs/34733559905",
+    "jobs": [
+      {
+        "id": 103660775972,
+        "name": "installed-integration (3.11)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh clones, installed artifacts, negative tests and offline restoration",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660775987,
+        "name": "installed-integration (3.12)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh clones, installed artifacts, negative tests and offline restoration",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660776000,
+        "name": "installed-integration (3.14)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh clones, installed artifacts, negative tests and offline restoration",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660776005,
+        "name": "installed-integration (3.13)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Fresh clones, installed artifacts, negative tests and offline restoration",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "repository": "brasileirao-predictor",
+    "run_id": 34733595774,
+    "sha": "0f69ba8a1da744eb4239b680fc0389f9dc631987",
+    "url": "https://github.com/leonardosovienski/brasileirao-predictor/actions/runs/34733595774",
+    "jobs": [
+      {
+        "id": 103660872935,
+        "name": ".NET 10 build and test",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Initialize containers",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Identify this job's disposable Redis",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-dotnet@v6",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Prepare the synthetic cross-process kernel",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run dotnet restore dotnet/LineupWorker.Tests/LineupWorker.Tests.csproj --locked-mode",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run dotnet build dotnet/LineupWorker/LineupWorker.csproj --configuration Release --no-restore --warnaserror",
+            "conclusion": "success"
+          },
+          {
+            "name": "Test Worker and Python processes against this job's Redis",
+            "conclusion": "success"
+          },
+          {
+            "name": "Enforce Worker line and branch coverage",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-dotnet@v6",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Stop containers",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660873004,
+        "name": "Python 3.14",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Initialize containers",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify canonical shared wheel hashes",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv sync --all-extras --locked",
+            "conclusion": "success"
+          },
+          {
+            "name": "Identify this job's disposable Redis",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python brasileirao_scripts/validate_env_example.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python brasileirao_scripts/seed_test_fixtures.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff check brasileirao_predictor brasileirao_scripts tests",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff format --check brasileirao_predictor brasileirao_scripts tests",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run pyright brasileirao_predictor",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run coverage run -m pytest",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run coverage run --append -m pytest -m integration",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run coverage report --fail-under=45",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run coverage json -o coverage.json",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python brasileirao_scripts/coverage_report.py coverage.json --output coverage-by-category.md",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv build",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run --isolated --with dist/*.whl --with \"predictor-core @ https://github.com/leonardosovienski/core-predictor/releases/download/v3.2.1/predictor_core-3.2.1-py3-none-any.whl\" --with \"predictor-ops @ https://github.com/leonardosovienski/predictor-ops/releases/download/v4.2.1/predictor_ops-4.2.1-py3-none-any.whl\" brasileirao-predict --help",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Stop containers",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660873023,
+        "name": "Python 3.13",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Initialize containers",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify canonical shared wheel hashes",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv sync --all-extras --locked",
+            "conclusion": "success"
+          },
+          {
+            "name": "Identify this job's disposable Redis",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python brasileirao_scripts/validate_env_example.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python brasileirao_scripts/seed_test_fixtures.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff check brasileirao_predictor brasileirao_scripts tests",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run ruff format --check brasileirao_predictor brasileirao_scripts tests",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run pyright brasileirao_predictor",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run coverage run -m pytest",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run coverage run --append -m pytest -m integration",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run coverage report --fail-under=45",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run coverage json -o coverage.json",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run python brasileirao_scripts/coverage_report.py coverage.json --output coverage-by-category.md",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv build",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run uv run --isolated --with dist/*.whl --with \"predictor-core @ https://github.com/leonardosovienski/core-predictor/releases/download/v3.2.1/predictor_core-3.2.1-py3-none-any.whl\" --with \"predictor-ops @ https://github.com/leonardosovienski/predictor-ops/releases/download/v4.2.1/predictor_ops-4.2.1-py3-none-any.whl\" brasileirao-predict --help",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Stop containers",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103661167230,
+        "name": "Compose build and health",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify canonical shared wheel hashes",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker compose config --quiet",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker compose build",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker compose up --detach --wait --wait-timeout 180",
+            "conclusion": "success"
+          },
+          {
+            "name": "Versioned Python Redis .NET smoke",
+            "conclusion": "success"
+          },
+          {
+            "name": "Redis loss and reconnection",
+            "conclusion": "success"
+          },
+          {
+            "name": "Graceful shutdown",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker compose logs --no-color",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker compose down --volumes",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "repository": "brasileirao-predictor",
+    "run_id": 34733595772,
+    "sha": "0f69ba8a1da744eb4239b680fc0389f9dc631987",
+    "url": "https://github.com/leonardosovienski/brasileirao-predictor/actions/runs/34733595772",
+    "jobs": [
+      {
+        "id": 103660872902,
+        "name": "Synthetic Python 3.14",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install the locked dependency graph",
+            "conclusion": "success"
+          },
+          {
+            "name": "Validate the reviewed synthetic allowlist",
+            "conclusion": "success"
+          },
+          {
+            "name": "Validate publication tools",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build distribution and verify wheel installation",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660873012,
+        "name": "Synthetic .NET 10 build and test",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Initialize containers",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Identify this job's disposable Redis",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-dotnet@v6",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Prepare the synthetic cross-process kernel",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run dotnet restore dotnet/LineupWorker.Tests/LineupWorker.Tests.csproj --locked-mode",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run dotnet build dotnet/LineupWorker/LineupWorker.csproj --configuration Release --no-restore --warnaserror",
+            "conclusion": "success"
+          },
+          {
+            "name": "Test Worker and Python processes against this job's Redis",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Enforce Worker line and branch coverage",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-dotnet@v6",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Stop containers",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660873015,
+        "name": "Synthetic Python 3.13",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install the locked dependency graph",
+            "conclusion": "success"
+          },
+          {
+            "name": "Validate the reviewed synthetic allowlist",
+            "conclusion": "success"
+          },
+          {
+            "name": "Validate publication tools",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build distribution and verify wheel installation",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103661008859,
+        "name": "Synthetic Compose build and health",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify canonical shared wheel hashes",
+            "conclusion": "success"
+          },
+          {
+            "name": "Isolate Compose configuration from operational paths",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker compose config --quiet",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker compose build",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker compose up --detach --wait --wait-timeout 180",
+            "conclusion": "success"
+          },
+          {
+            "name": "Versioned Python Redis .NET smoke",
+            "conclusion": "success"
+          },
+          {
+            "name": "Redis loss and reconnection",
+            "conclusion": "success"
+          },
+          {
+            "name": "Graceful shutdown",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker compose logs --no-color > compose-validation.log",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run docker compose down --volumes",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v7",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "repository": "brasileirao-predictor",
+    "run_id": 34733595771,
+    "sha": "0f69ba8a1da744eb4239b680fc0389f9dc631987",
+    "url": "https://github.com/leonardosovienski/brasileirao-predictor/actions/runs/34733595771",
+    "jobs": [
+      {
+        "id": 103660872906,
+        "name": "documentary-integration",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install the pinned consumer and its vendored contracts in an isolated environment",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify real documentary input through isolated CAIN CLI API and Historian",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660872959,
+        "name": "report-export (3.13)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run python tools/test_export_cain_status.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run python -m py_compile tools/export_cain_status.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660872974,
+        "name": "report-export (3.12)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run python tools/test_export_cain_status.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run python -m py_compile tools/export_cain_status.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 103660873011,
+        "name": "report-export (3.14)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run python tools/test_export_cain_status.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run python -m py_compile tools/export_cain_status.py",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  }
+]

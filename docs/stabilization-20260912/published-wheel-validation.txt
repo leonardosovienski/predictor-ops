@@ -1,0 +1,24 @@
+Using CPython 3.13.14 interpreter at: .venv\Scripts\python.exe
+Creating virtual environment at: C:\Users\leona\AppData\Local\Temp\ops-published-b7k9qoss\environment
+Activate with: C:\Users\leona\AppData\Local\Temp\ops-published-b7k9qoss\environment\Scripts\activate
+Using Python 3.13.14 environment at: C:\Users\leona\AppData\Local\Temp\ops-published-b7k9qoss\environment
+Resolved 8 packages in 316ms
+Prepared 1 package in 57ms
+Installed 8 packages in 305ms
+ + annotated-types==0.8.0
+ + predictor-ops==4.2.1 (from file:///C:/Users/leona/AppData/Local/Temp/ops-published-b7k9qoss/predictor_ops-4.2.1-py3-none-any.whl)
+ + pydantic==2.13.5
+ + pydantic-core==2.46.5
+ + pydantic-settings==2.15.0
+ + python-dotenv==1.2.3
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4
+{"duration_ms": 328, "event": "job_finished", "job_id": "success", "level": "INFO", "run_id": "0238a20b0db44e528a33a3166460f990", "run_status": "SUCCEEDED", "service": "predictor_ops", "timestamp": "2026-09-13T02:38:08.575800Z"}
+{"duration_ms": 228, "event": "job_finished", "job_id": "partial", "level": "INFO", "run_id": "de0a7f0076eb4373813e8f3e96f3d6b3", "run_status": "PARTIAL", "service": "predictor_ops", "timestamp": "2026-09-13T02:38:08.843644Z"}
+{"duration_ms": 213, "event": "job_finished", "job_id": "failure", "level": "INFO", "run_id": "db7612e45d094555ab55c4f51508eeae", "run_status": "FAILED", "service": "predictor_ops", "timestamp": "2026-09-13T02:38:09.105753Z"}
+{"duration_ms": 324, "event": "job_finished", "job_id": "timeout", "level": "INFO", "run_id": "eb4b76e79fea4a7caf324bd53950a3c0", "run_status": "FAILED", "service": "predictor_ops", "timestamp": "2026-09-13T02:38:09.466562Z"}
+{"duration_ms": 91, "event": "job_finished", "job_id": "interruption", "level": "INFO", "run_id": "f065839340684e3196a4a3430bb719eb", "run_status": "FAILED", "service": "predictor_ops", "timestamp": "2026-09-13T02:38:09.605389Z"}
+{"duration_ms": 326, "event": "job_finished", "job_id": "reuse", "level": "INFO", "run_id": "6e8d3c11179d490092cb172a8500ec8f", "run_status": "SUCCEEDED", "service": "predictor_ops", "timestamp": "2026-09-13T02:38:10.011620Z"}
+{"duration_ms": 207, "event": "job_finished", "job_id": "reuse", "level": "INFO", "run_id": "99a694ff53c64585ac4941253bd0b1f7", "run_status": "SUCCEEDED", "service": "predictor_ops", "timestamp": "2026-09-13T02:38:10.232634Z"}
+{"identity": {"identity_status": "VALIDATED", "kind": "wheel", "mode": "strict", "verified_files": 22, "version": "4.2.1"}, "module": "C:\\Users\\leona\\AppData\\Local\\Temp\\ops-published-b7k9qoss\\environment\\Lib\\site-packages\\predictor_ops\\__init__.py", "results": [{"case": "success", "exit_code": 0, "status": "SUCCEEDED"}, {"case": "partial", "exit_code": 2, "status": "PARTIAL"}, {"case": "failure", "exit_code": 9, "status": "FAILED"}, {"case": "timeout", "exit_code": 124, "status": "FAILED"}, {"case": "interruption", "exit_code": 130, "status": "FAILED"}], "version": "4.2.1"}
+{"published_url": "https://github.com/leonardosovienski/predictor-ops/releases/download/v4.2.1/predictor_ops-4.2.1-py3-none-any.whl", "sha256": "da4fa540703879669caba919521ec7d3c33734b5d57781122823df8817346f0e", "python": "3.13.14 (main, Jul 23 2026, 14:44:10) [MSC v.1944 64 bit (AMD64)]", "status": "VALIDADO"}

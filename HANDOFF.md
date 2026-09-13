@@ -1,4 +1,4 @@
-> **Current stabilization candidate: 4.2.1.** See [current evidence and pending gates](docs/stabilization-20260912/REPORT.md). Earlier dated results below are historical, not validation of this candidate.
+> **Ops 4.2.1 publicado e validado.** [Release](https://github.com/leonardosovienski/predictor-ops/releases/tag/v4.2.1), [evidências atuais e limites operacionais](docs/stabilization-20260912/REPORT.md). Fonte da release: `ddd91444282569ae8282e7c96e0ec372ef4e5144`. Os registros datados abaixo são históricos; instalação operacional não foi atualizada.
 
 # HANDOFF — predictor-ops
 

@@ -1,0 +1,200 @@
+{
+  "status": "PASS",
+  "manifest": {
+    "consumers": {
+      "cripto-predictor": {
+        "version": "1.1.0",
+        "wheel_sha256": "2570f38cab8f444ae8cb478ffd48e7c9c1905c704efdf95b373786c834fc966c",
+        "commit": "4c4d97ec9bfff185df089a6edb6da9ccd71f306f"
+      },
+      "brasileirao-predictor": {
+        "version": "0.2.0",
+        "wheel_sha256": "126da971870380973e6c76ae5b070491b11ab2eac122b74e8394137324d1ebc8",
+        "commit": "5cc4125071761973cea37c2116b4a1a34b233eb7"
+      },
+      "stocks-predictor": {
+        "version": "0.2.0",
+        "wheel_sha256": "22f093301fa01205f55e5057cc4f444aa21b0f87d09e3e90f90b4516ab099b33",
+        "commit": "3066321e599ee15dd0ace4167d2791545ce6eb95"
+      }
+    },
+    "shared": {
+      "ecosystem-predictor": {
+        "version": "0.2.0",
+        "hash": "sha256:0ae3d61f95fb5dfba703564ea04c063aac212691290dcda71baa3c779a9a164e"
+      },
+      "predictor-ops": {
+        "version": "4.2.1",
+        "hash": "sha256:da4fa540703879669caba919521ec7d3c33734b5d57781122823df8817346f0e"
+      }
+    }
+  },
+  "manifest_sha256": "ff4342beed49b1faad86507752e3bb7b625b99ffbf161f2df895494dcf62bc79",
+  "released_wheels": false,
+  "diagnostics": {
+    "brasileirao": {
+      "schema_version": "plugin-diagnostics/2",
+      "origin": {
+        "entry_point": "brasileirao_predictor.ecosystem_plugin:PLUGIN",
+        "distribution": "brasileirao-predictor",
+        "version": "0.2.0"
+      },
+      "capital_authorized_by_diagnostic": false,
+      "health": {
+        "contract_status": "VALID",
+        "payload": {
+          "domain": "brasileirao",
+          "status": "WAITING",
+          "version": "0.2.0",
+          "details": {
+            "mode": "shadow",
+            "adapter": "plugin-v1",
+            "note": "sa\u00fade do dom\u00ednio deve ser derivada dos jobs; adapter n\u00e3o promove readiness"
+          }
+        },
+        "state_namespace": "brasileirao",
+        "legacy_v1_contract_status": "VALID",
+        "state_mapping": null
+      },
+      "capabilities": {
+        "contract_status": "VALID",
+        "payload": {
+          "domain": "brasileirao",
+          "supports_prediction": true,
+          "supports_settlement": false,
+          "supports_collection": true,
+          "scientific_status": "UNKNOWN",
+          "predictive_status": "UNKNOWN",
+          "economic_status": "NOT_VALIDATED",
+          "capital_permission": "FORBIDDEN",
+          "extra": {
+            "mode": "shadow",
+            "manual_execution": true,
+            "source_of_scientific_truth": "HANDOFF.md"
+          }
+        },
+        "state_namespace": "brasileirao",
+        "legacy_v1_contract_status": "VALID",
+        "state_mapping": null
+      }
+    },
+    "cripto": {
+      "schema_version": "plugin-diagnostics/2",
+      "origin": {
+        "entry_point": "GarimpoInvestimentos.plugin:PLUGIN",
+        "distribution": "cripto-predictor",
+        "version": "1.1.0"
+      },
+      "capital_authorized_by_diagnostic": false,
+      "health": {
+        "contract_status": "VALID",
+        "payload": {
+          "domain": "crypto",
+          "version": null,
+          "status": "SOURCE_UNAVAILABLE",
+          "details": {
+            "mode": "research",
+            "feature_store": "MISSING"
+          }
+        },
+        "state_namespace": "crypto",
+        "legacy_v1_contract_status": "VALID",
+        "state_mapping": null
+      },
+      "capabilities": {
+        "contract_status": "VALID",
+        "payload": {
+          "domain": "crypto",
+          "supports_prediction": false,
+          "supports_settlement": false,
+          "supports_collection": false,
+          "scientific_status": "NO_ACTIVE_HYPOTHESIS",
+          "predictive_status": "INCONCLUSIVE",
+          "economic_status": "HISTORICAL_NO_GO",
+          "capital_permission": "FORBIDDEN",
+          "extra": {
+            "mode": "RESEARCH_ONLY",
+            "active_hypothesis": null,
+            "hypotheses": {
+              "H1": "CLOSED_NO_GO",
+              "H2": "CLOSED_NO_GO",
+              "H3": "CLOSED_NO_GO",
+              "H4": "CLOSED_INSUFFICIENT_SAMPLE",
+              "H5": "CLOSED_NO_GO",
+              "H6": "CLOSED_INSUFFICIENT_SAMPLE",
+              "H7": "REGISTERED_NOT_ACTIVATED",
+              "H8": "REGISTERED_NOT_ACTIVATED",
+              "H9": "CLOSED_INSUFFICIENT_SAMPLE"
+            },
+            "security_status": "ROTATED_CONFIRMED_BY_OWNER_2026-08-19",
+            "old_key_revocation_external_check_pending": true,
+            "trading": false,
+            "source_of_scientific_truth": "charters/scientific_state.json"
+          }
+        },
+        "state_namespace": "crypto",
+        "legacy_v1_contract_status": "INVALID",
+        "state_mapping": null
+      }
+    },
+    "stocks": {
+      "schema_version": "plugin-diagnostics/2",
+      "origin": {
+        "entry_point": "stocks_predictor.ecosystem_plugin:PLUGIN",
+        "distribution": "stocks-predictor",
+        "version": "0.2.0"
+      },
+      "capital_authorized_by_diagnostic": false,
+      "health": {
+        "contract_status": "VALID",
+        "payload": {
+          "domain": "stocks",
+          "status": "WAITING",
+          "version": "0.2.0",
+          "details": {
+            "mode": "research",
+            "active_line": "H21_BOVA11_CONDITIONAL_RESEARCH",
+            "adapter": "plugin-v1"
+          }
+        },
+        "state_namespace": "stocks",
+        "legacy_v1_contract_status": "VALID",
+        "state_mapping": null
+      },
+      "capabilities": {
+        "contract_status": "VALID",
+        "payload": {
+          "domain": "stocks",
+          "supports_prediction": false,
+          "supports_settlement": false,
+          "supports_collection": false,
+          "scientific_status": "DISCOVERY_INCONCLUSIVE",
+          "predictive_status": "NO_VALIDATED_NET_EDGE",
+          "economic_status": "NO_GO",
+          "capital_permission": "FORBIDDEN",
+          "extra": {
+            "mode": "research",
+            "active_line": "H21_BOVA11_CONDITIONAL_RESEARCH",
+            "net_historical_replay_complete": false,
+            "historical_lines_preserved": [
+              "H1-H20",
+              "predictor-rj"
+            ],
+            "source_of_scientific_truth": "STOCKS_CURRENT_STATE.md"
+          }
+        },
+        "state_namespace": "stocks",
+        "legacy_v1_contract_status": "INVALID",
+        "state_mapping": null
+      }
+    }
+  },
+  "source_revisions": {
+    "ecosystem-predictor": "6b236fc57fccc35ad50aff223f7cf21ec4ab1ae9",
+    "cripto-predictor": "4c4d97ec9bfff185df089a6edb6da9ccd71f306f",
+    "brasileirao-predictor": "5cc4125071761973cea37c2116b4a1a34b233eb7",
+    "stocks-predictor": "3066321e599ee15dd0ace4167d2791545ce6eb95"
+  },
+  "published_ops_url": "https://github.com/leonardosovienski/predictor-ops/releases/download/v4.2.1/predictor_ops-4.2.1-py3-none-any.whl",
+  "ops_source": "ddd91444282569ae8282e7c96e0ec372ef4e5144"
+}
