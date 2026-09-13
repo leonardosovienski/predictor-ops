@@ -59,7 +59,10 @@ def main():
             "--python",
             str(python),
             "https://github.com/leonardosovienski/core-predictor/releases/download/v3.2.1/predictor_core-3.2.1-py3-none-any.whl",
-            *(str(wheel) for wheel in wheels.glob("*.whl")),
+            *(
+                wheel.as_uri() + "#sha256=" + hashlib.sha256(wheel.read_bytes()).hexdigest()
+                for wheel in wheels.glob("*.whl")
+            ),
         )
         check = root / "check_real_plugin_integration.py"
         shutil.copyfile(root / "ecosystem-predictor/scripts/check_real_plugin_integration.py", check)
