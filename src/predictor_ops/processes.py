@@ -3,8 +3,27 @@
 from __future__ import annotations
 
 import ctypes
+import sys
 from ctypes import wintypes
 from typing import Any
+
+
+def _kernel32() -> Any:
+    if sys.platform == "win32":
+        return ctypes.WinDLL("kernel32", use_last_error=True)
+    raise OSError("Windows process ownership is unavailable on this platform")
+
+
+def _last_error() -> int:
+    if sys.platform == "win32":
+        return ctypes.get_last_error()
+    raise OSError("Windows error state is unavailable on this platform")
+
+
+def _windows_error(code: int) -> OSError:
+    if sys.platform == "win32":
+        return ctypes.WinError(code)
+    return OSError(code, "Windows process ownership error")
 
 
 class _ThreadEntry(ctypes.Structure):
@@ -46,7 +65,7 @@ class _ExtendedLimits(ctypes.Structure):
 
 class WindowsJob:
     def __init__(self) -> None:
-        self.api: Any = ctypes.WinDLL("kernel32", use_last_error=True)
+        self.api: Any = _kernel32()
         declarations = {
             "CreateJobObjectW": ([ctypes.c_void_p, wintypes.LPCWSTR], wintypes.HANDLE),
             "AssignProcessToJobObject": ([wintypes.HANDLE, wintypes.HANDLE], wintypes.BOOL),
@@ -68,28 +87,28 @@ class WindowsJob:
             function.argtypes, function.restype = args, result
         self.handle = self.api.CreateJobObjectW(None, None)
         if not self.handle:
-            raise ctypes.WinError(ctypes.get_last_error())
+            raise _windows_error(_last_error())
         limits = _ExtendedLimits()
         limits.basic.flags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
         if not self.api.SetInformationJobObject(self.handle, 9, ctypes.byref(limits), ctypes.sizeof(limits)):
-            error = ctypes.get_last_error()
+            error = _last_error()
             self.api.CloseHandle(self.handle)
             self.handle = None
-            raise ctypes.WinError(error)
+            raise _windows_error(error)
 
     def attach_and_resume(self, pid: int) -> None:
         # PROCESS_SET_QUOTA | PROCESS_TERMINATE, required for assignment.
         process = self.api.OpenProcess(0x0101, False, pid)
         if not process:
-            raise ctypes.WinError(ctypes.get_last_error())
+            raise _windows_error(_last_error())
         try:
             if not self.api.AssignProcessToJobObject(self.handle, process):
-                raise ctypes.WinError(ctypes.get_last_error())
+                raise _windows_error(_last_error())
         finally:
             self.api.CloseHandle(process)
         snapshot = self.api.CreateToolhelp32Snapshot(0x4, 0)
         if snapshot == ctypes.c_void_p(-1).value:
-            raise ctypes.WinError(ctypes.get_last_error())
+            raise _windows_error(_last_error())
         try:
             entry = _ThreadEntry()
             entry.size = ctypes.sizeof(entry)
@@ -98,10 +117,10 @@ class WindowsJob:
                 if entry.owner_pid == pid:
                     thread = self.api.OpenThread(0x0002, False, entry.thread_id)
                     if not thread:
-                        raise ctypes.WinError(ctypes.get_last_error())
+                        raise _windows_error(_last_error())
                     try:
                         if self.api.ResumeThread(thread) == 0xFFFFFFFF:
-                            raise ctypes.WinError(ctypes.get_last_error())
+                            raise _windows_error(_last_error())
                         return
                     finally:
                         self.api.CloseHandle(thread)
@@ -112,7 +131,7 @@ class WindowsJob:
 
     def terminate(self) -> None:
         if self.handle and not self.api.TerminateJobObject(self.handle, 1):
-            raise ctypes.WinError(ctypes.get_last_error())
+            raise _windows_error(_last_error())
 
     def close(self) -> None:
         if self.handle:
