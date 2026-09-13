@@ -1,0 +1,316 @@
+[
+  {
+    "path": "C:\\PREDICTORS\\predictor-ops",
+    "remote": "https://github.com/leonardosovienski/predictor-ops.git",
+    "head": "4392782b231364a9394dae04a57cad2c0bf73ef1",
+    "status": [
+      "## validation/retest-six-20260911...origin/validation/retest-six-20260911"
+    ],
+    "refs": [
+      "refs/heads/architecture/complete-20260911 6ab3069cce6720460a1a60211263dafbfd5b845e",
+      "refs/heads/main 74ef3eefe36ef3b2de2ed5b80debc5ec3bbd6d61",
+      "refs/heads/validation/retest-six-20260911 4392782b231364a9394dae04a57cad2c0bf73ef1",
+      "refs/remotes/origin/HEAD 0aa803fcaf0656061d9e251a85cbf0cf55071066",
+      "refs/remotes/origin/agent/expose-provenance-verification ce257df8ba0e020d63a81499367c13bb341219af",
+      "refs/remotes/origin/agent/harden-runtime-image baeef4fbfaa5b41c2afd8030e7978600a77e502d",
+      "refs/remotes/origin/architecture/complete-20260911 6ab3069cce6720460a1a60211263dafbfd5b845e",
+      "refs/remotes/origin/claude/auditoria-projetos-esr8na 36c032e65dc94410aded88cfb4e7458a34c950c8",
+      "refs/remotes/origin/claude/predictor-ecosystem-audit-srpwl3 307df1b2baecd4bd5d4f5651424d8a2daa91751c",
+      "refs/remotes/origin/claude/project-testing-validation-6p6nt1 1512a1093391542f90683e8d610293539a99e6cc",
+      "refs/remotes/origin/main 0aa803fcaf0656061d9e251a85cbf0cf55071066",
+      "refs/remotes/origin/validation/retest-six-20260911 4392782b231364a9394dae04a57cad2c0bf73ef1",
+      "refs/tags/v2.0.1 4a0481879d9a4ffd81dab0282b2e2ea92cd74e8c",
+      "refs/tags/v3.0.0 ec278c68e3b945f9aa0f8e76ec19c8e35c61d78f",
+      "refs/tags/v3.1.0 aab2da4557e1326b5b446346ae237ddc5c314e5b",
+      "refs/tags/v4.0.0 67d823b5721ddaa70c9586eff54595dd636d7bdd",
+      "refs/tags/v4.1.0 a9a47437abc30dffaad39d9518d39805752d0cb9",
+      "refs/tags/v4.2.0 e804ac8b5173156737e2212d9bd47cd3f2072700"
+    ],
+    "worktrees": [
+      "worktree C:/PREDICTORS/predictor-ops",
+      "HEAD 4392782b231364a9394dae04a57cad2c0bf73ef1",
+      "branch refs/heads/validation/retest-six-20260911",
+      ""
+    ],
+    "unpublished": []
+  },
+  {
+    "path": "C:\\PREDICTORS\\core-predictor",
+    "remote": "https://github.com/leonardosovienski/core-predictor.git",
+    "head": "bff0a548998d7db1dbaad346465771553b0cf4c9",
+    "status": [
+      "## validation/retest-six-20260911...origin/validation/retest-six-20260911"
+    ],
+    "refs": [
+      "refs/heads/architecture/complete-20260911 c1897c95fdb735b288858b1788020c909b2dbb40",
+      "refs/heads/main abe267b38e2e46bdb7720f2a2c1d220fa7c1dba3",
+      "refs/heads/validation/retest-six-20260911 bff0a548998d7db1dbaad346465771553b0cf4c9",
+      "refs/remotes/origin/HEAD de79cc19914b70bd8a8fa74a6e49b4ea192c1f91",
+      "refs/remotes/origin/architecture/complete-20260911 c1897c95fdb735b288858b1788020c909b2dbb40",
+      "refs/remotes/origin/claude/audit-predictor-ecosystem-cvx0wg 904a07582a6fbe576022a49e6e75ce7c70f44045",
+      "refs/remotes/origin/claude/auditoria-projetos-esr8na 5ab10601d9ebd7462593d3336237a753e559b211",
+      "refs/remotes/origin/claude/fix-attestation-bypass 4262c58135bbc1ed90163fe843d441a1f5c696b4",
+      "refs/remotes/origin/claude/fix-dsr-silent-degeneration f4249cd0c64c79ccc371a32ab37651cb43f16058",
+      "refs/remotes/origin/claude/release-3.2.0 f057705f8b6620bb47df27fe276cca37dbc0b4df",
+      "refs/remotes/origin/docs/final-reconciliation-2026-08-24 006713bd70508611e2ca351587ef0fd895f42fca",
+      "refs/remotes/origin/main de79cc19914b70bd8a8fa74a6e49b4ea192c1f91",
+      "refs/remotes/origin/validation/retest-six-20260911 bff0a548998d7db1dbaad346465771553b0cf4c9",
+      "refs/tags/1.0.0 86fad6d50b3c48041abc8a28a46e05736de62af2",
+      "refs/tags/1.0.1 6588502a6a7a5b51bc89ba17024926da9687db3b",
+      "refs/tags/v2.1.0 5e55c7a38c440803c97d8122267ca3e237c8aa37",
+      "refs/tags/v2.2.0 05a1d051660267fab93d9a6bc6eed8494a6f7613",
+      "refs/tags/v2.2.1 4303c280ead1ce57f3635ce24f0109df9bcca08c",
+      "refs/tags/v2.3.0 97e7e5347fb56e419d47334e9141e6488efab476",
+      "refs/tags/v3.0.0 d209ddd89780d6a5deb11713fa9193cca43cbac8",
+      "refs/tags/v3.1.0 111097bc920f707567066f4fbe1e7a4ca94208ff",
+      "refs/tags/v3.2.0 9fd83179c800302be50d1c47a38d677656505625",
+      "refs/tags/v3.2.1 7bb212cfa06333886e11e849b209c5aab801c04b"
+    ],
+    "worktrees": [
+      "worktree C:/PREDICTORS/core-predictor",
+      "HEAD bff0a548998d7db1dbaad346465771553b0cf4c9",
+      "branch refs/heads/validation/retest-six-20260911",
+      ""
+    ],
+    "unpublished": []
+  },
+  {
+    "path": "C:\\CRIPTO\\pesquisa-20260909",
+    "remote": "https://github.com/leonardosovienski/cripto-predictor",
+    "head": "4c4d97ec9bfff185df089a6edb6da9ccd71f306f",
+    "status": [
+      "## main...origin/main"
+    ],
+    "refs": [
+      "refs/heads/main 4c4d97ec9bfff185df089a6edb6da9ccd71f306f",
+      "refs/remotes/origin/HEAD 4c4d97ec9bfff185df089a6edb6da9ccd71f306f",
+      "refs/remotes/origin/main 4c4d97ec9bfff185df089a6edb6da9ccd71f306f",
+      "refs/research-validation/pr107-merge 23922488065a6c73f97ff98e135a72fdab37573c",
+      "refs/research-validation/pr108-merge 49c3d823d7af21f4c8894ff0514a3fbb6b0f925f",
+      "refs/tags/cripto-session-20260907-final 97f7b215d51a73a7341d777968a191ff9c7938b4",
+      "refs/tags/v1.1.0 6ea0d2ccdcfc6a3858083acb6ded5cb39e178586"
+    ],
+    "worktrees": [
+      "worktree C:/CRIPTO/restaurado-20260908/projeto",
+      "HEAD 522de73de85ada9f3491cd4c7c7d666557381f98",
+      "detached",
+      "",
+      "worktree C:/Cripto/auditoria-ampliada-20260910",
+      "HEAD 595f1203475d04b01966ac3471bbafd6770dbb4d",
+      "detached",
+      "",
+      "worktree C:/Cripto/correcao-pr110-20260910",
+      "HEAD 64dbdc2b6172de054c08be9c462772fcb3336da6",
+      "detached",
+      "",
+      "worktree C:/Cripto/fechamento-revisao-20260910",
+      "HEAD 19da2534baec32028f330d217c32588df35ce19b",
+      "detached",
+      "",
+      "worktree C:/Cripto/pesquisa-20260909",
+      "HEAD 4c4d97ec9bfff185df089a6edb6da9ccd71f306f",
+      "branch refs/heads/main",
+      "",
+      "worktree C:/Cripto/publicacao-chat-20260909",
+      "HEAD 4ae9e3d19d4dc7c761d353a8eab851d70f0230e3",
+      "detached",
+      "",
+      "worktree C:/Cripto/revisao-arquivos-20260910",
+      "HEAD fe1395066afc8a32c3a3bb91222309dc977c82c7",
+      "detached",
+      ""
+    ],
+    "unpublished": []
+  },
+  {
+    "path": "C:\\CRIPTO\\cain-l0-exporter-20260911",
+    "remote": "https://github.com/leonardosovienski/cripto-predictor.git",
+    "head": "f1052d0d3ce834a25f92582fc9aed3dc4d03ecc3",
+    "status": [
+      "## HEAD (no branch)"
+    ],
+    "refs": [
+      "refs/heads/main 9db8e9300dd5f743b71675e5217bee8cbeee5c90",
+      "refs/remotes/origin/HEAD 9db8e9300dd5f743b71675e5217bee8cbeee5c90",
+      "refs/remotes/origin/main 9db8e9300dd5f743b71675e5217bee8cbeee5c90",
+      "refs/tags/cripto-session-20260907-final 97f7b215d51a73a7341d777968a191ff9c7938b4"
+    ],
+    "worktrees": [
+      "worktree C:/CRIPTO/cain-l0-exporter-20260911",
+      "HEAD f1052d0d3ce834a25f92582fc9aed3dc4d03ecc3",
+      "detached",
+      ""
+    ],
+    "unpublished": []
+  },
+  {
+    "path": "C:\\STOCKS\\stocks-predictor",
+    "remote": "https://github.com/leonardosovienski/stocks-predictor.git",
+    "head": "3066321e599ee15dd0ace4167d2791545ce6eb95",
+    "status": [
+      "## main...origin/main"
+    ],
+    "refs": [
+      "refs/heads/main 3066321e599ee15dd0ace4167d2791545ce6eb95",
+      "refs/remotes/origin/HEAD 3066321e599ee15dd0ace4167d2791545ce6eb95",
+      "refs/remotes/origin/main 3066321e599ee15dd0ace4167d2791545ce6eb95",
+      "refs/tags/v0.2.0 56c1a7b8db33f15404342fc61cceaa64452517d5"
+    ],
+    "worktrees": [
+      "worktree C:/STOCKS/stocks-predictor",
+      "HEAD 3066321e599ee15dd0ace4167d2791545ce6eb95",
+      "branch refs/heads/main",
+      ""
+    ],
+    "unpublished": []
+  },
+  {
+    "path": "C:\\BRASILEIRAO\\brasileirao-predictor",
+    "remote": "https://github.com/leonardosovienski/brasileirao-predictor.git",
+    "head": "5cc4125071761973cea37c2116b4a1a34b233eb7",
+    "status": [
+      "## main...origin/main"
+    ],
+    "refs": [
+      "refs/codex/integration-main-20260912 6fb26e88e9221a61ab2ba986d3c46103721f3fe3",
+      "refs/heads/main 5cc4125071761973cea37c2116b4a1a34b233eb7",
+      "refs/remotes/origin/HEAD 5cc4125071761973cea37c2116b4a1a34b233eb7",
+      "refs/remotes/origin/main 5cc4125071761973cea37c2116b4a1a34b233eb7",
+      "refs/tags/v0.2.0 4dbd35332344000d116ea2ac56903c77e73f9aa2"
+    ],
+    "worktrees": [
+      "worktree C:/BRASILEIRAO/brasileirao-predictor",
+      "HEAD 5cc4125071761973cea37c2116b4a1a34b233eb7",
+      "branch refs/heads/main",
+      ""
+    ],
+    "unpublished": []
+  },
+  {
+    "path": "C:\\CAIN\\projeto",
+    "remote": "https://github.com/leonardosovienski/cain.git",
+    "head": "a495bdd4e6c877f86e6dc6aac21695f71869b9c5",
+    "status": [
+      "## main...origin/main",
+      " M src/cain/agents/__init__.py",
+      " M src/cain/identity/__init__.py",
+      " M src/cain/orchestrator/__init__.py",
+      " M src/cain/orchestrator/routing.py",
+      " M src/cain/persistence/__init__.py",
+      " M src/cain/persistence/adapters/sqlite.py",
+      "?? tests/integration/test_recent_conversation_context.py"
+    ],
+    "refs": [
+      "refs/heads/main a495bdd4e6c877f86e6dc6aac21695f71869b9c5",
+      "refs/remotes/origin/HEAD a495bdd4e6c877f86e6dc6aac21695f71869b9c5",
+      "refs/remotes/origin/main a495bdd4e6c877f86e6dc6aac21695f71869b9c5",
+      "refs/tags/v0.4.5 37cdc604d4c3bbb66684c018c76a4ea38713ee2a"
+    ],
+    "worktrees": [
+      "worktree C:/CAIN/projeto",
+      "HEAD a495bdd4e6c877f86e6dc6aac21695f71869b9c5",
+      "branch refs/heads/main",
+      "",
+      "worktree C:/CAIN/work/CAIN-AUDIT-20260912-180619-5972eb4b/candidate",
+      "HEAD 5ba4177a11b9312900e5035517aa5ef25d509859",
+      "detached",
+      "",
+      "worktree C:/CAIN/work/CAIN-COMPOUND-20260912-191513/candidate",
+      "HEAD a6130501e3666caeeb97020d58bb59630c39121b",
+      "detached",
+      "",
+      "worktree C:/CAIN/work/CAIN-RECONSTRUCTION-20260912-185541/candidate",
+      "HEAD d849a8581827c1e85e717858d8150a502c1d57f5",
+      "detached",
+      "",
+      "worktree C:/CAIN/work/independent-baseline-20260911",
+      "HEAD 231ffa8791b6cd89de0a025ddb4ec02298e8cd45",
+      "detached",
+      "",
+      "worktree C:/CAIN/work/independent-delivered-20260911",
+      "HEAD dc114fcbfeb7e709468da129408851d3e7665ced",
+      "detached",
+      "",
+      "worktree C:/CAIN/work/independent-review-20260911",
+      "HEAD 780b020540e67bd6c8268033c5a012cab207fcd1",
+      "detached",
+      "",
+      "worktree C:/CAIN/work/individual-model-tests-20260911",
+      "HEAD e1786feb70f1a0175be8238b0cf4c1ecaec2637b",
+      "detached",
+      "",
+      "worktree C:/CAIN/work/research-bundle-v1",
+      "HEAD 945f58e9d780d8121c584e7d9bd271d0a7c40296",
+      "detached",
+      "",
+      "worktree C:/CAIN/work/research-capabilities-20260911",
+      "HEAD 231ffa8791b6cd89de0a025ddb4ec02298e8cd45",
+      "detached",
+      "",
+      "worktree C:/CAIN/work/stocks-main-install-20260912",
+      "HEAD 44d6118ae0ea1553324fe7689753fa474ee629a0",
+      "detached",
+      ""
+    ],
+    "unpublished": []
+  },
+  {
+    "path": "C:\\CAIN\\contrato",
+    "remote": "https://github.com/leonardosovienski/ecosystem-predictor.git",
+    "head": "6b236fc57fccc35ad50aff223f7cf21ec4ab1ae9",
+    "status": [
+      "## main...origin/main"
+    ],
+    "refs": [
+      "refs/heads/architecture/complete-20260911 f586b5d29a0b31ed7d79943efcf744345a08e6d4",
+      "refs/heads/audit/stocks-integration-20260912 71607e7770c9979610a32cb6448e1e76d231a1d0",
+      "refs/heads/audit/stocks-primary-coherence-20260912 dda782761c430af654b59208d3e41faf6ee7fe28",
+      "refs/heads/feature/research-bundle-v1 a9f6594c840482419d6c310f373813e0e71f17d0",
+      "refs/heads/local/l0-contract 1ddc9a51ce14339559e9a57fe6a6760a2cac2e62",
+      "refs/heads/main 6b236fc57fccc35ad50aff223f7cf21ec4ab1ae9",
+      "refs/heads/validation/retest-six-20260911 8c62a07255dee103cbd2bc0ad847d68c4b053cdd",
+      "refs/remotes/origin/HEAD 6b236fc57fccc35ad50aff223f7cf21ec4ab1ae9",
+      "refs/remotes/origin/agent/ecosystem-factual-staleness-gate 0cc9243f19d71d1488713dc7d59314b12f6874d0",
+      "refs/remotes/origin/agent/modernize-ecosystem-predictor e9c18bc385003401d615468e218e68c1c3574fc1",
+      "refs/remotes/origin/agent/refresh-facts-after-core-tools d2c297d0be7a6615b27698b62b37639cefdb99a2",
+      "refs/remotes/origin/agent/tcc-evidence-closure 3b7f0ef180780e13c71fa405931706a982f1837b",
+      "refs/remotes/origin/architecture/complete-20260911 f586b5d29a0b31ed7d79943efcf744345a08e6d4",
+      "refs/remotes/origin/audit/stocks-integration-20260912 71607e7770c9979610a32cb6448e1e76d231a1d0",
+      "refs/remotes/origin/audit/stocks-primary-coherence-20260912 e3bca911baaa9b4beaf26dd92c7a6dcf23925ba0",
+      "refs/remotes/origin/claude/auditoria-projetos-esr8na 6e0f66f4caa693e7482e94a4c455cb590b94d77d",
+      "refs/remotes/origin/claude/predictor-ecosystem-audit-srpwl3 c4b5dc62455ec564c11e842186d3257253a5f3ef",
+      "refs/remotes/origin/claude/projeto-funcional-investimento-taq69q 23d1d9ebc321821d3698385d955c8531b8d21733",
+      "refs/remotes/origin/docs/f1-reconcile-ecosystem 6143b93dd8b4890e68f1178c1be15d2809e997f2",
+      "refs/remotes/origin/docs/final-reconciliation-2026-08-24 3658604220428201a33dfd45482b6c93fdecae4b",
+      "refs/remotes/origin/docs/p4-consolidation 7978b462d297ae93e570611cab43a5a53931c0b9",
+      "refs/remotes/origin/docs/track-current-handoff-2026-08-24 e690594e51543b608bea83b2ec71228e539dfc07",
+      "refs/remotes/origin/feature/research-bundle-v1 a9f6594c840482419d6c310f373813e0e71f17d0",
+      "refs/remotes/origin/fix/p0-canonical-ecosystem 1bfead9c202174b62fd90ff868f1339c2d854614",
+      "refs/remotes/origin/fix/p0-mechanical-six 2ad0f5dfd64836f3c4ab383bf1838d9e7c68567f",
+      "refs/remotes/origin/integration/crypto-wheel-audit-20260912 6a998520825292895bcae71e589fa8ac0e02bb85",
+      "refs/remotes/origin/local/l0-contract 1ddc9a51ce14339559e9a57fe6a6760a2cac2e62",
+      "refs/remotes/origin/main 6b236fc57fccc35ad50aff223f7cf21ec4ab1ae9",
+      "refs/remotes/origin/p1/canonical-predictor-contract 4de2cfa5cd5a7638f055b697ae718fe9db6b3322",
+      "refs/remotes/origin/p1/plugin-mechanical-reconciliation 3ccc4a53da1fcafe961c2ef0dfe0d4849ec90609",
+      "refs/remotes/origin/reconcile/stocks-modernization-20260824 c18c2f2b1de69ba314b45c39cf27d1c8b0b5f29e",
+      "refs/remotes/origin/refactor/p1-migrate-ops3 9400fd734f7dfd0dc878bce228ee05498734d9d4",
+      "refs/remotes/origin/validation/retest-six-20260911 8c62a07255dee103cbd2bc0ad847d68c4b053cdd",
+      "refs/tags/v0.2.0 2e8be61d3d8b0cf10e1dfbcce8ff7acdef219327"
+    ],
+    "worktrees": [
+      "worktree C:/CAIN/contrato",
+      "HEAD 6b236fc57fccc35ad50aff223f7cf21ec4ab1ae9",
+      "branch refs/heads/main",
+      "",
+      "worktree C:/CAIN/work/brasileirao-docs-main-20260912/candidate",
+      "HEAD 6b236fc57fccc35ad50aff223f7cf21ec4ab1ae9",
+      "detached",
+      "",
+      "worktree C:/CAIN/work/stocks-integration-audit-20260912",
+      "HEAD dda782761c430af654b59208d3e41faf6ee7fe28",
+      "branch refs/heads/audit/stocks-primary-coherence-20260912",
+      ""
+    ],
+    "unpublished": []
+  }
+]

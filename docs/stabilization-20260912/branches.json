@@ -1,0 +1,58 @@
+[
+  {
+    "branch": "origin/agent/expose-provenance-verification",
+    "sha": "ce257df8ba0e020d63a81499367c13bb341219af",
+    "ancestor": false,
+    "patches": "- ae18156132d585bf16eae475f99be658d506e9bf",
+    "decision": "equivalent patches",
+    "recovery": "ops-before.bundle refs/remotes/origin/agent/expose-provenance-verification"
+  },
+  {
+    "branch": "origin/agent/harden-runtime-image",
+    "sha": "baeef4fbfaa5b41c2afd8030e7978600a77e502d",
+    "ancestor": false,
+    "patches": "- baeef4fbfaa5b41c2afd8030e7978600a77e502d",
+    "decision": "equivalent patches",
+    "recovery": "ops-before.bundle refs/remotes/origin/agent/harden-runtime-image"
+  },
+  {
+    "branch": "origin/architecture/complete-20260911",
+    "sha": "6ab3069cce6720460a1a60211263dafbfd5b845e",
+    "ancestor": true,
+    "patches": "",
+    "decision": "already incorporated",
+    "recovery": "ops-before.bundle refs/remotes/origin/architecture/complete-20260911"
+  },
+  {
+    "branch": "origin/claude/auditoria-projetos-esr8na",
+    "sha": "36c032e65dc94410aded88cfb4e7458a34c950c8",
+    "ancestor": false,
+    "patches": "- 36c032e65dc94410aded88cfb4e7458a34c950c8",
+    "decision": "equivalent patches",
+    "recovery": "ops-before.bundle refs/remotes/origin/claude/auditoria-projetos-esr8na"
+  },
+  {
+    "branch": "origin/claude/predictor-ecosystem-audit-srpwl3",
+    "sha": "307df1b2baecd4bd5d4f5651424d8a2daa91751c",
+    "ancestor": false,
+    "patches": "- 307df1b2baecd4bd5d4f5651424d8a2daa91751c",
+    "decision": "equivalent patches",
+    "recovery": "ops-before.bundle refs/remotes/origin/claude/predictor-ecosystem-audit-srpwl3"
+  },
+  {
+    "branch": "origin/claude/project-testing-validation-6p6nt1",
+    "sha": "1512a1093391542f90683e8d610293539a99e6cc",
+    "ancestor": false,
+    "patches": "+ a9ebb275f0c5386010f57ac29bb0744cbad9f479\n+ 1512a1093391542f90683e8d610293539a99e6cc",
+    "decision": "equivalent current behavior: .gitattributes identical; package and lock already 4.2.0; historical 4.1.0 changelog retained",
+    "recovery": "ops-before.bundle refs/remotes/origin/claude/project-testing-validation-6p6nt1"
+  },
+  {
+    "branch": "origin/validation/retest-six-20260911",
+    "sha": "4392782b231364a9394dae04a57cad2c0bf73ef1",
+    "ancestor": false,
+    "patches": "+ f77a807f775519039e94b57441fa7c89175d0f76\n+ 4392782b231364a9394dae04a57cad2c0bf73ef1",
+    "decision": "integrated as candidate ancestor; two historical documentation commits retained and superseded by current report",
+    "recovery": "ops-before.bundle refs/remotes/origin/validation/retest-six-20260911"
+  }
+]

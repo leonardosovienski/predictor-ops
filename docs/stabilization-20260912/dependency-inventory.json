@@ -1,0 +1,33 @@
+{
+  "os": "Windows-11-10.0.26200-SP0",
+  "python": "3.13.14",
+  "files": {
+    "C:/PREDICTORS/predictor-ops": {
+      "pyproject.toml": "426b745488039b7ce3b9ad5ee0bcd3ffba298387ba8e4197b350512e04962cda",
+      "uv.lock": "bfcb4ddd9d46006fe79fd1d1ef17863fc0a7c1bd2361c94aed11f96d61a437c5"
+    },
+    "C:/PREDICTORS/core-predictor": {
+      "pyproject.toml": "91f2b3ca686405c737b6cc407525c49d620eacd968d72a8178ae6be5ed30d3f5",
+      "uv.lock": "8818bc64957e3eee07ab6055a2eee14f615fd84d491c74cfa555f32602a8348b"
+    },
+    "C:/CRIPTO/pesquisa-20260909": {
+      "pyproject.toml": "65f02fdb3a4723c5fd0ad6931d2f0c4f8738b095f9a3128d4461b48f05ed3b96",
+      "uv.lock": "d867fde0b830b8e8b67a1e794ff985442d80d8b544f9e96139d43b9e3006faa7"
+    },
+    "C:/BRASILEIRAO/brasileirao-predictor": {
+      "pyproject.toml": "33044a6a95f98da09d6e0e207ebfb0140d2cdd1bb21dd96048bb3007a9e0b29c",
+      "uv.lock": "3e5e75d32c8105f97b207a659767d9d5635bacb690574d7f8059c15c22ebfbeb"
+    },
+    "C:/STOCKS/stocks-predictor": {
+      "pyproject.toml": "1f44796c3a8272083958ce6c2f8b4d44de08dd01261f1362958973032ede9f9b",
+      "uv.lock": "06bd8b1b4f644a3d9d0abf0267f277c7fe9ed466780b5fc69d985318784ee2db"
+    },
+    "C:/CAIN/projeto": {
+      "pyproject.toml": "f59ddcb74a07bda9832239247cdd8d276fa7d1383345f8aa636fba2687fa60b8"
+    },
+    "C:/CAIN/contrato": {
+      "pyproject.toml": "bf7963c2d8b42f9f448030a90b91d5b908f08a0e6ef57069b85452101b098152",
+      "uv.lock": "91e230ab0dea9ef27431e301198457fec892bf287346f1df1024bcbbf7d498cc"
+    }
+  }
+}

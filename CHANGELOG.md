@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.2.1
+
+- Release locks on preflight/persistence errors; redact all persisted metadata.
+- Bound capture memory independently of newlines.
+- Contain Windows children before execution and reap descendants after leader exit.
+- Exercise complete installed-wheel jobs in CI and containers.
+
 ## 4.2.0 — candidato local, não publicado
 
 - Jobs genéricos aceitos no schema 3; política econômica continua explícita.

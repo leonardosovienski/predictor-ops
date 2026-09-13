@@ -1,0 +1,71 @@
+FFF.                                                                     [100%]
+================================== FAILURES ===================================
+________________ test_early_persistence_failure_releases_lock _________________
+
+tmp_path = WindowsPath('C:/Users/leona/AppData/Local/Temp/pytest-of-leona/pytest-195/test_early_persistence_failure0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A275FED5B0>
+
+    def test_early_persistence_failure_releases_lock(tmp_path, monkeypatch):
+        job = JobConfig(
+            id="blocked", command=[sys.executable, "-c", "raise AssertionError('must not run')"],
+            job_type=JobType.EXECUTION, capital_permission=True, runtime=RuntimeConfig(root=tmp_path),
+        )
+    
+        def fail(*args):
+            raise OSError("fixture persistence failure")
+    
+        monkeypatch.setattr(runner, "atomic_json", fail)
+        with pytest.raises(OSError):
+            runner.run_job(job)
+        lock = backend(job.runtime).acquire(job.id, "retry", 60)
+        try:
+>           assert lock.acquired
+E           AssertionError: assert False
+E            +  where False = LocalLock(path=WindowsPath('C:/Users/leona/AppData/Local/Temp/pytest-of-leona/pytest-195/test_early_persistence_failure0/blocked/run.lock'), run_id='retry', _acquired=False).acquired
+
+tests_v2\test_stabilization.py:28: AssertionError
+____________ test_skipped_metadata_is_redacted_before_persistence _____________
+
+tmp_path = WindowsPath('C:/Users/leona/AppData/Local/Temp/pytest-of-leona/pytest-195/test_skipped_metadata_is_redac0')
+
+    def test_skipped_metadata_is_redacted_before_persistence(tmp_path):
+        secret = "fixture-super-secret-123456"
+        job = JobConfig(
+            id="blocked", command=[sys.executable, "-c", "raise AssertionError('must not run')"],
+            job_type=JobType.EXECUTION, capital_permission=True, runtime=RuntimeConfig(root=tmp_path),
+            environment={"API_TOKEN": secret}, input_reference=secret, scientific_state=secret,
+        )
+        result = runner.run_job(job)
+>       assert secret not in json.dumps(result.record)
+E       assert 'fixture-sup...ecret-123456' not in '{"schema_ve...t_missing"]}'
+E         
+E         'fixture-super-secret-123456' is contained here:
+E         ?           ^^
+E           _state": "fixture-super-secret-123456", "command": ["C:\\PREDICTORS\\predictor-ops\\.venv\\Scripts\\python.exe", "-c", "raise AssertionError('must not run')"], "cwd": null, "provenance": {}, "config_version": null, "input_reference": "fixture-super-secret-123456", "output_reference": null, "retry_count": 0, "host_or_environment": "Leo", "reason": "kill_switch_open", "kill_switch_reasons": ["risk_snapshot_missing"]}
+E         ?           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests_v2\test_stabilization.py:41: AssertionError
+________________ test_capture_memory_is_bounded_before_newline ________________
+
+    def test_capture_memory_is_bounded_before_newline():
+        # Allocate fixture before tracing: measure the reader, not fixture storage.
+        stream = io.BytesIO(b"x" * (8 * 1024 * 1024))
+        sink, truncated, errors = bytearray(), threading.Event(), []
+        tracemalloc.start()
+        try:
+            runner._drain(stream, sink, (), 1024, truncated, errors)
+            _, peak = tracemalloc.get_traced_memory()
+        finally:
+            tracemalloc.stop()
+        assert not errors
+        assert len(sink) == 1024 and truncated.is_set()
+>       assert peak < 1024 * 1024, peak
+E       AssertionError: 16777290
+E       assert 16777290 < (1024 * 1024)
+
+tests_v2\test_stabilization.py:58: AssertionError
+=========================== short test summary info ===========================
+FAILED tests_v2/test_stabilization.py::test_early_persistence_failure_releases_lock
+FAILED tests_v2/test_stabilization.py::test_skipped_metadata_is_redacted_before_persistence
+FAILED tests_v2/test_stabilization.py::test_capture_memory_is_bounded_before_newline
+3 failed, 1 passed in 6.36s

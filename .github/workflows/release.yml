@@ -14,6 +14,38 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify-published:
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.13"
+          - os: ubuntu-latest
+            python: "3.14"
+          - os: windows-latest
+            python: "3.13"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.1"
+      - run: uv python install ${{ matrix.python }}
+      - run: uv run --no-project --python ${{ matrix.python }} python scripts/validate_published.py https://github.com/leonardosovienski/predictor-ops/releases/download/${{ github.ref_name }}
+      - if: runner.os == 'Linux' && matrix.python == '3.13'
+        run: uv run --no-project --python 3.13 python scripts/validate_consumers.py
+        env:
+          OPS_WHEEL_URL: https://github.com/leonardosovienski/predictor-ops/releases/download/${{ github.ref_name }}
+          CONSUMER_RECEIPT: ${{ runner.temp }}/published-consumer-receipt.json
+      - if: runner.os == 'Linux' && matrix.python == '3.13'
+        uses: actions/upload-artifact@v7
+        with:
+          name: published-consumer-contracts
+          path: ${{ runner.temp }}/published-consumer-receipt.json
+          if-no-files-found: error
+
   build:
     name: Build and validate package
     runs-on: ubuntu-latest
@@ -96,10 +128,12 @@ jobs:
             --python "$isolated/venv" \
             dist/*.whl
 
+          cp scripts/validate_installed.py "$isolated/validate_installed.py"
           cd "$isolated"
 
           "$isolated/venv/bin/predictor-ops" --version
           "$isolated/venv/bin/predictor-ops" --help
+          "$isolated/venv/bin/python" validate_installed.py
 
       - name: Generate artifact attestations
         uses: actions/attest@v4

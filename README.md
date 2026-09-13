@@ -1,4 +1,11 @@
+> **Current stabilization candidate: 4.2.1.** See [current evidence and pending gates](docs/stabilization-20260912/REPORT.md). Earlier dated results below are historical, not validation of this candidate.
+
 # predictor_ops
+
+<!-- DOC-SYNC-20260912 -->
+> **Estado de publicação em 12/09/2026:** leia [a continuidade atual](PUBLICATION_STATUS_20260912.md). Branch `validation/retest-six-20260911`. Este projeto não recebeu alterações de código na remediação CAIN Supply. Esta rodada atualiza somente documentação; versões e validações anteriores conservam seu escopo. Afirmações anteriores de “sem push” descrevem a etapa histórica anterior à autorização.
+<!-- /DOC-SYNC-20260912 -->
+
 
 ## Entrega arquitetural publicada — 11/09/2026
 
@@ -17,7 +24,7 @@ named `tools`.
 ## Install and use
 
 ```bash
-pip install predictor_ops-4.1.0-py3-none-any.whl
+pip install predictor_ops-4.2.1-py3-none-any.whl
 predictor-ops validate jobs.json
 predictor-ops provenance
 predictor-ops run --config jobs.json --job example-collection
@@ -58,7 +65,7 @@ supply-chain gate and does not contact the network.
 
 ## Runtime contract
 
-Every run writes `<runtime-root>/<job-id>/heartbeat.json` atomically and appends
+Every executing run writes `<runtime-root>/<job-id>/heartbeat.json` atomically and appends
 a serialized, fsynced `events.jsonl` record. The deliberately local-only backend
 uses an owned filesystem lock with stale/dead-owner recovery.
 
@@ -99,7 +106,7 @@ uv run pytest --cov --cov-report=term-missing
 uv build
 ```
 
-CI tests Python 3.13 on Linux and Windows, Python 3.14 experimentally, builds a
+CI tests Python 3.13 on Linux and Windows, Python 3.14 on Linux, builds a
 wheel, installs it into a clean environment outside the checkout, runs the CLI,
 The Docker image runs non-root;
 mount `/var/lib/predictor-ops` writable while keeping the root filesystem

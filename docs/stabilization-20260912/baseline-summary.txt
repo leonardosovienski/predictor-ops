@@ -1,0 +1,6 @@
+1 ruff check . EXIT=0
+2 ruff format --check . EXIT=0
+3 pyright EXIT=0
+4 python -W error::ResourceWarning -m pytest --cov --cov-report=term-missing EXIT=0
+5 python -W error::ResourceWarning -m pytest windows_integration -q EXIT=1
+6 python -m build EXIT=0
