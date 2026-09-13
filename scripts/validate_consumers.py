@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+import urllib.request
 from pathlib import Path
 
 REVISIONS = {
@@ -30,7 +31,15 @@ def main():
     with tempfile.TemporaryDirectory(prefix="ops-consumers-") as temporary:
         root = Path(temporary)
         wheels = root / "wheels"
-        run("uv", "build", "--wheel", "--out-dir", str(wheels), cwd=source)
+        if published_url := os.environ.get("OPS_WHEEL_URL"):
+            if not published_url.endswith(".whl"):
+                published_url += (
+                    "/predictor_ops-" + published_url.rsplit("/", 1)[1].removeprefix("v") + "-py3-none-any.whl"
+                )
+            wheels.mkdir()
+            urllib.request.urlretrieve(published_url, wheels / published_url.rsplit("/", 1)[1])
+        else:
+            run("uv", "build", "--wheel", "--out-dir", str(wheels), cwd=source)
         manifest = {"consumers": {}, "shared": {}}
         for name, sha in REVISIONS.items():
             checkout = root / name
@@ -69,6 +78,7 @@ def main():
         run(str(python), str(check), "--manifest", str(manifest_path), cwd=root, env=env)
         receipt = json.loads(destination.read_text())
         receipt["source_revisions"] = REVISIONS
+        receipt["published_ops_url"] = published_url
         receipt["ops_source"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=source, text=True).strip()
         destination.write_text(json.dumps(receipt, indent=2))
 
