@@ -50,19 +50,15 @@ def main():
             "hash": "sha256:" + hashlib.sha256(ops.read_bytes()).hexdigest(),
         }
         environment = root / "environment"
-        run("uv", "venv", str(environment), "--python", "3.13")
+        run("uv", "venv", str(environment), "--python", "3.13", "--seed")
         python = environment / "bin/python"
         run(
-            "uv",
+            str(python),
+            "-m",
             "pip",
             "install",
-            "--python",
-            str(python),
             "https://github.com/leonardosovienski/core-predictor/releases/download/v3.2.1/predictor_core-3.2.1-py3-none-any.whl",
-            *(
-                wheel.as_uri() + "#sha256=" + hashlib.sha256(wheel.read_bytes()).hexdigest()
-                for wheel in wheels.glob("*.whl")
-            ),
+            *(str(wheel) for wheel in wheels.glob("*.whl")),
         )
         check = root / "check_real_plugin_integration.py"
         shutil.copyfile(root / "ecosystem-predictor/scripts/check_real_plugin_integration.py", check)
