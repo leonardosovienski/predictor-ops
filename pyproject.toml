@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "predictor-ops"
-version = "4.2.1"
+version = "4.2.2rc1"
 description = "Portable operational runner for predictor workloads"
 readme = "README.md"
 requires-python = ">=3.13"

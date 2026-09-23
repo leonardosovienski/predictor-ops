@@ -23,8 +23,17 @@ def _mutation_guard(path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a+b") as handle:
         if path.stat().st_size == 0:
-            handle.write(b"0")
-            handle.flush()
+            # Initialize through an unbuffered descriptor. Windows byte locks are
+            # mandatory: when a concurrent process already initialized the guard and
+            # holds byte 0, the write is refused; the lock loop below then waits for
+            # it. A buffered write would re-raise on seek/close (SHARED-005).
+            descriptor = os.open(path, os.O_WRONLY)
+            try:
+                os.write(descriptor, b"0")
+            except PermissionError:
+                pass
+            finally:
+                os.close(descriptor)
         deadline = time.monotonic() + 30
         while True:
             try:
