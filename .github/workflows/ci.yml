@@ -8,23 +8,6 @@ permissions:
   contents: read
 
 jobs:
-  consumer-contracts:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v7
-        with:
-          version: "0.12.1"
-      - run: uv python install 3.13
-      - run: uv run --no-project --python 3.13 python scripts/validate_consumers.py
-        env:
-          CONSUMER_RECEIPT: ${{ runner.temp }}/consumer-receipt.json
-      - uses: actions/upload-artifact@v7
-        with:
-          name: consumer-contracts-${{ github.sha }}
-          path: ${{ runner.temp }}/consumer-receipt.json
-          if-no-files-found: error
-
   test:
     strategy:
       fail-fast: false
@@ -44,22 +27,22 @@ jobs:
           version: "0.12.1"
           enable-cache: true
       - run: uv python install ${{ matrix.python }}
-      - run: uv sync --python ${{ matrix.python }} --all-extras
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
-      - run: uv run pyright
-      - run: uv run python -W error::ResourceWarning -m pytest --cov --cov-report=term-missing
+      - run: uv sync --locked --python ${{ matrix.python }} --all-extras
+      - run: uv run --locked ruff check .
+      - run: uv run --locked ruff format --check .
+      - run: uv run --locked pyright
+      - run: uv run --locked python -W error::ResourceWarning -m pytest --cov --cov-report=term-missing
       - if: runner.os == 'Windows'
-        run: uv run python -W error::ResourceWarning -m pytest windows_integration -q
+        run: uv run --locked python -W error::ResourceWarning -m pytest windows_integration -q
       - if: runner.os == 'Linux'
-        run: uv run python -W error::ResourceWarning -m pytest posix_integration -q
+        run: uv run --locked python -W error::ResourceWarning -m pytest posix_integration -q
       - if: runner.os == 'Linux' && matrix.python == '3.13'
         run: uvx pip-audit
       - if: runner.os == 'Linux' && matrix.python == '3.13'
         shell: bash
         run: |
           uvx detect-secrets scan --only-verified --all-files --exclude-files 'uv.lock|dist/|.git/|.venv/' > /tmp/secrets.json
-          uv run python -c "import json; data=json.load(open('/tmp/secrets.json')); assert not data['results'], data['results']"
+          uv run --locked python -c "import json; data=json.load(open('/tmp/secrets.json')); assert not data['results'], data['results']"
       - run: uv build
       - if: runner.os == 'Linux'
         shell: bash

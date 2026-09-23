@@ -1,0 +1,30 @@
+# Aposentado do push/PR por D-13 e pelo critério de D-15 (qualificação pré-treinamento,
+# HYG-004). Job movido sem alteração do ci.yml: clona consumidores em SHAs fixos,
+# builda as wheels deles e instala Core sem hash, fora de lock — o que C4 não admite
+# no CI de push/PR. Só roda por workflow_dispatch; fora do escopo de HOSTED_CI.
+name: Consumer contracts (historical)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  consumer-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.1"
+      - run: uv python install 3.13
+      - run: uv run --no-project --python 3.13 python scripts/validate_consumers.py
+        env:
+          CONSUMER_RECEIPT: ${{ runner.temp }}/consumer-receipt.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: consumer-contracts-${{ github.sha }}
+          path: ${{ runner.temp }}/consumer-receipt.json
+          if-no-files-found: error
+
