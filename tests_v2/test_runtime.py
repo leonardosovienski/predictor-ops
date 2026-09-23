@@ -71,3 +71,45 @@ def test_atomic_json_and_durable_jsonl(tmp_path):
     append_jsonl(events, {"n": 2})
     assert json.loads(heartbeat.read_text()) == {"ok": True}
     assert [json.loads(line)["n"] for line in events.read_text().splitlines()] == [1, 2]
+
+
+def _hold_first_byte(path, ready, release):
+    with open(path, "a+b") as handle:
+        handle.seek(0)
+        if os.name == "nt":
+            import msvcrt
+
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        ready.set()
+        release.wait(10)
+
+
+def test_empty_guard_locked_by_another_process_waits_instead_of_crashing(tmp_path):
+    """SHARED-005: two processes race on a new job's guard; the loser must wait, not die.
+
+    Windows locks are mandatory: initializing the guard with a buffered write while the
+    winner already holds byte 0 raised PermissionError out of LocalBackend.acquire.
+    """
+    import threading
+
+    from predictor_ops.runtime import _mutation_guard
+
+    guard = tmp_path / "job" / ".mutation.guard"
+    guard.parent.mkdir()
+    guard.write_bytes(b"")
+    context = multiprocessing.get_context("spawn")
+    ready, release = context.Event(), context.Event()
+    holder = context.Process(target=_hold_first_byte, args=(str(guard), ready, release))
+    holder.start()
+    assert ready.wait(10)
+    threading.Timer(0.5, release.set).start()
+    started = time.monotonic()
+    with _mutation_guard(guard):
+        waited = time.monotonic() - started
+    holder.join(10)
+    assert holder.exitcode == 0
+    assert waited >= 0.3  # it really waited for the holder

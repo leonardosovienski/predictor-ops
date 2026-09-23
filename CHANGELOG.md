@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.2.2rc1
+
+- Windows: the local lock mutation guard no longer crashes the losing process when two
+  processes race on a new job (SHARED-005). The guard is initialized through an
+  unbuffered descriptor and a refused write (byte 0 already locked by the winner) waits
+  in the lock loop instead of raising `PermissionError` out of `run_job`.
+
 ## 4.2.1
 
 - Release locks on preflight/persistence errors; redact all persisted metadata.
