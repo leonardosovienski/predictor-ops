@@ -8,7 +8,7 @@ version = "4.2.2rc1"
 description = "Portable operational runner for predictor workloads"
 readme = "README.md"
 requires-python = ">=3.13"
-license = {text = "MIT"}
+license = {text = "Proprietary"}
 dependencies = [
   "pydantic>=2.11,<3",
   "pydantic-settings>=2.10,<3",
