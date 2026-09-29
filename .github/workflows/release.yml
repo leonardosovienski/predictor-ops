@@ -112,7 +112,10 @@ jobs:
             --cov-report=term-missing
 
       - name: Audit dependencies
-        run: uvx pip-audit
+        # As dependências do projeto, exportadas do uv.lock (não o ambiente do uvx).
+        run: |
+          uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file "$RUNNER_TEMP/audit-requirements.txt"
+          uvx pip-audit --disable-pip --no-deps -r "$RUNNER_TEMP/audit-requirements.txt"
 
       - name: Build package
         run: uv build
