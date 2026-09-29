@@ -1,0 +1,36 @@
+# Apaga branches remotas já integradas (ou inúteis) por workflow_dispatch, uma por linha, nunca `main`.
+# O push de deleção de branches é bloqueado no ambiente de desenvolvimento que abriu este workflow;
+# o runner faz o `git push --delete` com o token do próprio job.
+name: Delete branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      branches:
+        description: "Branches a apagar, uma por linha (main é sempre recusada)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - shell: bash
+        env:
+          BRANCHES: ${{ inputs.branches }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r b; do
+            b="${b//$'\r'/}"; b="$(echo "$b" | xargs)"; [[ -z "$b" ]] && continue
+            [[ "$b" == "main" ]] && { echo "recusado: main" >&2; exit 1; }
+            if git ls-remote --exit-code --heads origin "$b" >/dev/null; then
+              git push origin --delete "$b" && echo "apagada: $b"
+            else
+              echo "inexistente: $b"
+            fi
+          done <<< "$BRANCHES"
