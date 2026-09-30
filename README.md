@@ -1,9 +1,9 @@
-> **Ops 4.2.1 publicado e validado.** [Release](https://github.com/leonardosovienski/predictor-ops/releases/tag/v4.2.1), [evidências atuais e limites operacionais](docs/stabilization-20260912/REPORT.md). Fonte da release: `ddd91444282569ae8282e7c96e0ec372ef4e5144`. [Implantação local de 13/09/2026](docs/DEPLOYMENT_20260913.md): Ops 4.2.1 instalado nos ambientes Cripto e Brasileirão; agendamentos não ativados. Os registros datados abaixo são históricos.
+> **Ops 4.2.2rc1 publicado e validado** ([release](https://github.com/leonardosovienski/predictor-ops/releases/tag/v4.2.2rc1); é a wheel que cripto, brasileirão e stocks fixam por URL + sha256 e a que o qualificador usa). Estado vivo em [docs/ESTADO_2026-09-30.md](docs/ESTADO_2026-09-30.md). O `main` declara `4.2.2rc2` **não publicada** (só documentação desde a rc1). Registro histórico da 4.2.1: [release](https://github.com/leonardosovienski/predictor-ops/releases/tag/v4.2.1), [evidências e limites](docs/stabilization-20260912/REPORT.md).
 
 # predictor_ops
 
 <!-- DOC-SYNC-20260912 -->
-> **Estado de publicação em 12/09/2026:** leia [a continuidade atual](PUBLICATION_STATUS_20260912.md). Branch `validation/retest-six-20260911`. Este projeto não recebeu alterações de código na remediação CAIN Supply. Esta rodada atualiza somente documentação; versões e validações anteriores conservam seu escopo. Afirmações anteriores de “sem push” descrevem a etapa histórica anterior à autorização.
+> **Estado de publicação:** o atual está em [docs/ESTADO_2026-09-30.md](docs/ESTADO_2026-09-30.md); o registro de 12/09/2026 é [histórico](PUBLICATION_STATUS_20260912.md). Branch `validation/retest-six-20260911`. Este projeto não recebeu alterações de código na remediação CAIN Supply. Esta rodada atualiza somente documentação; versões e validações anteriores conservam seu escopo. Afirmações anteriores de “sem push” descrevem a etapa histórica anterior à autorização.
 <!-- /DOC-SYNC-20260912 -->
 
 
@@ -11,8 +11,8 @@
 
 Versão **4.2.0** publicada: [release e artefatos](https://github.com/leonardosovienski/predictor-ops/releases/tag/v4.2.0). [CI de engenharia aprovada](https://github.com/leonardosovienski/predictor-ops/actions/runs/34628184138) para a fonte `e804ac8b5173156737e2212d9bd47cd3f2072700`. Consulte [ARCHITECTURE_IMPLEMENTATION.md](ARCHITECTURE_IMPLEMENTATION.md) para comportamento, migração e limites. Este registro atualiza a entrega de software; estados científicos e registros datados abaixo conservam sua autoridade e contexto histórico.
 
-> **Estado no ecossistema em 2026-09-06:** versão 4.1.0 (release `v4.1.0`,
-> 2026-09-05). Brasileirão e cripto declaram 4.1.0; Stocks não depende de Ops. Gates de edge pertencem
+> **Estado no ecossistema (histórico de 2026-09-06; em 2026-09-30 os três domínios declaram 4.2.2rc1):** versão 4.1.0 (release `v4.1.0`,
+> 2026-09-05). Brasileirão e cripto declaravam 4.1.0; Stocks não dependia de Ops. Gates de edge pertencem
 > aos domínios. Ops executa `SHADOW_DECISION`, idempotência, risco e reconciliação,
 > mas nunca promove lucro nem autoriza capital por inferência.
 
@@ -24,7 +24,7 @@ named `tools`.
 ## Install and use
 
 ```bash
-pip install predictor_ops-4.2.1-py3-none-any.whl
+pip install predictor_ops-4.2.2rc1-py3-none-any.whl
 predictor-ops validate jobs.json
 predictor-ops provenance
 predictor-ops run --config jobs.json --job example-collection
