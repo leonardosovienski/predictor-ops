@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.2.2rc2
+
+_Não publicada._ Só documentação: o README passa a apontar para a 4.2.2rc1 (banner, comando de instalação e estado no ecossistema) e para
+`docs/ESTADO_2026-09-30.md`. Como o README entra na METADATA da wheel, o número mudou sem release; nenhuma linha de código mudou desde a 4.2.2rc1,
+que continua sendo a wheel dos consumidores e do qualificador.
+
 ## 4.2.2rc1
 
 - Windows: the local lock mutation guard no longer crashes the losing process when two
