@@ -3,7 +3,7 @@
 # predictor_ops
 
 <!-- DOC-SYNC-20260912 -->
-> **Estado de publicação em 12/09/2026:** leia [a continuidade atual](PUBLICATION_STATUS_20260912.md). Branch `validation/retest-six-20260911`. Este projeto não recebeu alterações de código na remediação CAIN Supply. Esta rodada atualiza somente documentação; versões e validações anteriores conservam seu escopo. Afirmações anteriores de “sem push” descrevem a etapa histórica anterior à autorização.
+> **Estado de publicação:** o atual está em [docs/ESTADO_2026-09-30.md](docs/ESTADO_2026-09-30.md); o registro de 12/09/2026 é [histórico](PUBLICATION_STATUS_20260912.md). Branch `validation/retest-six-20260911`. Este projeto não recebeu alterações de código na remediação CAIN Supply. Esta rodada atualiza somente documentação; versões e validações anteriores conservam seu escopo. Afirmações anteriores de “sem push” descrevem a etapa histórica anterior à autorização.
 <!-- /DOC-SYNC-20260912 -->
 
 
