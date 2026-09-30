@@ -1,5 +1,6 @@
-> **Ops 4.2.1 publicado e validado.** [Release](https://github.com/leonardosovienski/predictor-ops/releases/tag/v4.2.1), [evidências atuais e limites operacionais](docs/stabilization-20260912/REPORT.md). Fonte da release: `ddd91444282569ae8282e7c96e0ec372ef4e5144`. [Implantação local de 13/09/2026](docs/DEPLOYMENT_20260913.md): Ops 4.2.1 instalado nos ambientes Cripto e Brasileirão; agendamentos não ativados. Os registros datados abaixo são históricos.
-
+> **Estado em 2026-09-30:** a pré-release **4.2.2rc1** ([release](https://github.com/leonardosovienski/predictor-ops/releases/tag/v4.2.2rc1), wheel `0be70bfb…`, construída do commit `9831b0d` do PR #26) é a versão consumida por `cripto-predictor` e `brasileirao-predictor` (por URL + sha256 no `uv.lock`) e a `final_wheel` das qualificações da Etapa A e da Etapa B (predictor-qualification). Ela corrige a SHARED-005 (a guarda de lock não derruba o processo perdedor no Windows). A **4.2.1** continua sendo a última release estável; o `main` depois da 4.2.2rc1 só mudou CI, Dockerfile e README (nenhum arquivo de `src/`, `pyproject.toml` ou `uv.lock`).
+>
+> Histórico: **Ops 4.2.1 publicado e validado.** [Release](https://github.com/leonardosovienski/predictor-ops/releases/tag/v4.2.1), [evidências atuais e limites operacionais](docs/stabilization-20260912/REPORT.md). Fonte da release: `ddd91444282569ae8282e7c96e0ec372ef4e5144`. [Implantação local de 13/09/2026](docs/DEPLOYMENT_20260913.md): Ops 4.2.1 instalado nos ambientes Cripto e Brasileirão; agendamentos não ativados. Os registros datados abaixo são históricos.
 # predictor_ops
 
 <!-- DOC-SYNC-20260912 -->
@@ -7,11 +8,11 @@
 <!-- /DOC-SYNC-20260912 -->
 
 
-## Entrega arquitetural publicada — 11/09/2026
+## Entrega arquitetural publicada — 11/09/2026 (histórico)
 
 Versão **4.2.0** publicada: [release e artefatos](https://github.com/leonardosovienski/predictor-ops/releases/tag/v4.2.0). [CI de engenharia aprovada](https://github.com/leonardosovienski/predictor-ops/actions/runs/34628184138) para a fonte `e804ac8b5173156737e2212d9bd47cd3f2072700`. Consulte [ARCHITECTURE_IMPLEMENTATION.md](ARCHITECTURE_IMPLEMENTATION.md) para comportamento, migração e limites. Este registro atualiza a entrega de software; estados científicos e registros datados abaixo conservam sua autoridade e contexto histórico.
 
-> **Estado no ecossistema em 2026-09-06:** versão 4.1.0 (release `v4.1.0`,
+> **Estado no ecossistema em 2026-09-06 (histórico):** versão 4.1.0 (release `v4.1.0`,
 > 2026-09-05). Brasileirão e cripto declaram 4.1.0; Stocks não depende de Ops. Gates de edge pertencem
 > aos domínios. Ops executa `SHADOW_DECISION`, idempotência, risco e reconciliação,
 > mas nunca promove lucro nem autoriza capital por inferência.
@@ -24,7 +25,7 @@ named `tools`.
 ## Install and use
 
 ```bash
-pip install predictor_ops-4.2.1-py3-none-any.whl
+pip install predictor_ops-4.2.2rc1-py3-none-any.whl   # ou a 4.2.1 estável
 predictor-ops validate jobs.json
 predictor-ops provenance
 predictor-ops run --config jobs.json --job example-collection
